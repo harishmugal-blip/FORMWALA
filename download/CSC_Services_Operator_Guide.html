@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CSC Smart Seva - Services Operator Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+@page { size: 720px 1020px; margin: 0; }
+:root{
+  --c-navy:#1a365d;
+  --c-mid:#2a5298;
+  --c-light:#4a7ac7;
+  --c-block:#dce6f5;
+  --c-bg:#f5f8fc;
+  --c-text:#24303f;
+  --c-muted:#5d6b7e;
+  --c-border:#d7dfe9;
+}
+html,body{
+  margin:0; padding:0; width:720px;
+  background:#1a365d;
+  color:var(--c-text);
+  font-family:'Inter', 'Liberation Sans', sans-serif;
+  font-size:15px; line-height:1.62;
+  overflow-wrap:break-word; word-break:normal; hyphens:auto;
+}
+@media screen{
+  html{ height:auto; display:flex; justify-content:center; background:#0f2440; }
+  body{ transform-origin:top center; margin:20px auto; box-shadow:0 8px 40px rgba(0,0,0,.4); }
+}
+p,td,li{ overflow-wrap:break-word; }
+
+/* ============ COVER ============ */
+.cover{
+  width:720px; height:1020px; box-sizing:border-box;
+  break-after:page; overflow:hidden;
+  background:linear-gradient(160deg,#1a365d 0%,#204374 55%,#2a5298 100%);
+  color:#fff; position:relative;
+  display:flex; flex-direction:column; justify-content:center;
+  padding:64px;
+}
+.cover .deco-ring{
+  position:absolute; border-radius:50%; border:1.5px solid rgba(255,255,255,.14);
+}
+.cover .ring-a{ width:340px; height:340px; top:-120px; right:-110px; }
+.cover .ring-b{ width:220px; height:220px; top:40px; right:120px; border-color:rgba(255,255,255,.08); }
+.cover .ring-c{ width:180px; height:180px; bottom:-60px; left:-50px; border-color:rgba(255,255,255,.10); }
+.cover .grid-dots{
+  position:absolute; left:64px; bottom:170px; width:150px; height:60px;
+  background-image:radial-gradient(rgba(255,255,255,.22) 1.5px, transparent 1.5px);
+  background-size:15px 15px;
+}
+.cover-badge{
+  display:inline-block; align-self:flex-start;
+  border:1px solid rgba(255,255,255,.45); border-radius:999px;
+  padding:7px 18px; font-size:12px; letter-spacing:3.5px; font-weight:600;
+  text-transform:uppercase; margin-bottom:34px;
+}
+.cover-kicker{ font-size:13px; letter-spacing:2px; color:#a9c3e8; font-weight:600; text-transform:uppercase; margin-bottom:14px; }
+.cover-title{ font-size:56px; font-weight:900; line-height:1.04; letter-spacing:-1px; }
+.cover-title .thin{ font-weight:300; display:block; font-size:34px; letter-spacing:0; margin-top:10px; color:#dce6f5; }
+.cover-sub{
+  margin-top:26px; font-size:15.5px; line-height:1.7; color:#c9d8ef; max-width:470px; font-weight:400;
+}
+.cover-stats{ display:flex; flex-wrap:wrap; gap:14px; margin-top:40px; max-width:520px; }
+.cover-stat{
+  flex:1 1 100px; min-width:100px; max-width:118px;
+  border:1px solid rgba(255,255,255,.22); border-radius:12px;
+  padding:16px 18px; background:rgba(255,255,255,.05);
+}
+.cover-stat .n{ font-size:26px; font-weight:800; }
+.cover-stat .l{ font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#a9c3e8; margin-top:3px; }
+.cover-edition{
+  position:absolute; left:64px; right:64px; bottom:56px;
+  display:flex; justify-content:space-between; align-items:center;
+  border-top:1px solid rgba(255,255,255,.25); padding-top:18px;
+  font-size:12px; letter-spacing:2px; color:#a9c3e8; text-transform:uppercase; font-weight:500;
+}
+
+/* ============ FLOW CONTENT ============ */
+.main-content{
+  background:var(--c-bg);
+  padding:58px 60px 44px 60px;
+}
+.section-tag{
+  display:inline-block; background:var(--c-mid); color:#fff;
+  font-size:10.5px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase;
+  padding:5px 14px; border-radius:999px;
+}
+.section-title{ font-size:26px; font-weight:800; color:var(--c-navy); margin:12px 0 4px; letter-spacing:-.3px; line-height:1.22; }
+.divider{ height:3px; width:64px; background:var(--c-light); border-radius:2px; margin:10px 0 18px; }
+.body-text{ margin:0 0 12px; color:var(--c-text); }
+.body-text b, .card b, td b{ color:var(--c-navy); }
+.lead{ font-size:15.5px; }
+
+.chapter-header{ break-after:avoid; break-inside:avoid; margin-top:28px; }
+.card{ break-inside:avoid; margin-bottom:14px; }
+
+/* golden rules */
+.rule-card{
+  background:#fff; border:1px solid var(--c-border); border-left:4px solid var(--c-mid);
+  border-radius:10px; padding:14px 18px; margin-bottom:12px;
+  break-inside:avoid;
+}
+.rule-card .rn{ font-size:11px; font-weight:800; letter-spacing:2px; color:var(--c-mid); text-transform:uppercase; }
+.rule-card .rt{ font-size:15px; font-weight:700; color:var(--c-navy); margin:2px 0 4px; }
+.rule-card .rd{ font-size:13.5px; color:var(--c-muted); line-height:1.55; }
+
+/* service header */
+.svc-top{ display:flex; flex-wrap:wrap; align-items:flex-start; gap:14px; max-width:100%; }
+.svc-num{
+  flex:0 0 auto; min-width:52px; max-width:100%;
+  background:var(--c-navy); color:#fff; font-weight:800; font-size:20px;
+  border-radius:12px; padding:12px 14px; text-align:center; letter-spacing:1px;
+}
+.svc-titles{ flex:1 1 auto; min-width:200px; }
+.svc-name{ font-size:23px; font-weight:800; color:var(--c-navy); line-height:1.15; }
+.svc-cat{ font-size:12px; color:var(--c-muted); letter-spacing:1.2px; text-transform:uppercase; font-weight:600; margin-top:4px; }
+.svc-fee{ flex:0 0 auto; text-align:right; background:var(--c-block); border-radius:12px; padding:10px 16px; }
+.svc-fee .fee-amount{ font-size:20px; font-weight:800; color:var(--c-navy); }
+.svc-fee .fee-label{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--c-mid); font-weight:700; }
+
+/* meta chips */
+.meta-row{ display:flex; flex-wrap:wrap; gap:10px; margin:14px 0 16px; max-width:100%; }
+.meta-chip{
+  flex:1 1 180px; min-width:160px; max-width:100%;
+  background:#fff; border:1px solid var(--c-border); border-radius:10px; padding:10px 14px;
+  break-inside:avoid;
+}
+.meta-chip .mk{ display:block; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--c-mid); font-weight:700; margin-bottom:3px; }
+.meta-chip .mv{ font-size:13.5px; color:var(--c-text); font-weight:500; line-height:1.45; }
+
+/* section sub-headers */
+h3.sub{
+  font-size:15.5px; font-weight:800; color:var(--c-navy); margin:18px 0 8px;
+  break-after:avoid; letter-spacing:-.1px;
+}
+h3.sub .idx{ color:var(--c-light); font-weight:800; margin-right:6px; }
+
+/* tables */
+table{ width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--c-border); border-radius:10px; overflow:hidden; font-size:12.5px; }
+thead{ display:table-header-group; }
+tr{ break-inside:avoid; }
+th{ background:var(--c-block); color:var(--c-navy); text-align:left; font-weight:700; padding:8px 12px; font-size:11px; letter-spacing:1px; text-transform:uppercase; }
+td{ padding:7px 12px; border-top:1px solid var(--c-border); vertical-align:top; line-height:1.5; }
+tbody tr:nth-child(odd) td{ background:#f2f6fb; }
+table, .table-wrap{ break-inside:auto; }
+
+/* doc chips */
+.doc-chips{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 4px; max-width:100%; }
+.doc-chip{
+  flex:0 1 auto; min-width:80px; max-width:100%;
+  background:#fff; border:1.5px solid var(--c-light); color:var(--c-navy);
+  border-radius:999px; padding:6px 15px; font-size:12.5px; font-weight:600;
+  overflow-wrap:break-word;
+}
+.doc-chip .opt{ color:var(--c-muted); font-weight:500; }
+
+/* steps */
+ol.steps{ margin:8px 0 6px; padding-left:0; list-style:none; counter-reset:step; }
+ol.steps li{
+  counter-increment:step; position:relative; padding:0 0 10px 42px;
+  break-inside:avoid; line-height:1.55; font-size:13.5px; color:var(--c-text);
+}
+ol.steps li::before{
+  content:counter(step); position:absolute; left:0; top:0;
+  width:28px; height:28px; border-radius:50%;
+  background:var(--c-mid); color:#fff; font-weight:700; font-size:13px;
+  display:flex; align-items:center; justify-content:center;
+}
+ol.steps li b{ color:var(--c-navy); }
+
+/* sahi-tarike knowledge box */
+.know{
+  background:#fff; border:1px solid var(--c-border); border-left:4px solid var(--c-navy);
+  border-radius:12px; padding:14px 18px; break-inside:avoid; margin:10px 0 6px;
+}
+.know .kt{ font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--c-navy); margin-bottom:6px; }
+.know ul{ margin:0; padding-left:18px; font-size:13px; color:var(--c-text); }
+.know li{ margin-bottom:5px; line-height:1.5; break-inside:avoid; }
+.know li b{ color:var(--c-navy); }
+
+/* tips box */
+.tips{
+  background:var(--c-block); border-radius:12px; padding:14px 18px;
+  break-inside:avoid; margin:12px 0 6px; border-left:4px solid var(--c-light);
+}
+.tips .tt{ font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--c-mid); margin-bottom:6px; }
+.tips ul{ margin:0; padding-left:18px; font-size:13px; color:var(--c-text); }
+.tips li{ margin-bottom:5px; line-height:1.5; break-inside:avoid; }
+
+/* portal box */
+.portal-box{
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+  background:#fff; border:1px dashed var(--c-light); border-radius:10px;
+  padding:10px 16px; margin:6px 0; break-inside:avoid; max-width:100%;
+}
+.portal-box .pk{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--c-mid); font-weight:700; }
+.portal-box .pv{ font-size:12.5px; font-weight:600; color:var(--c-navy); font-family:'Liberation Mono', monospace; overflow-wrap:anywhere; }
+
+/* quick reference table */
+.qref th:first-child{ width:34px; }
+
+/* ============ ENDING ============ */
+.ending{
+  width:720px; height:1020px; box-sizing:border-box;
+  break-before:page; overflow:hidden; position:relative;
+  background:linear-gradient(200deg,#2a5298 0%,#1a365d 60%,#12294a 100%);
+  color:#fff; display:flex; flex-direction:column; justify-content:center; padding:64px;
+}
+.ending .deco-ring{ position:absolute; border-radius:50%; border:1.5px solid rgba(255,255,255,.12); }
+.ending .ring-a{ width:300px; height:300px; bottom:-100px; right:-90px; }
+.ending .big-text{ font-size:40px; font-weight:900; line-height:1.15; letter-spacing:-.5px; }
+.ending .big-text .thin{ font-weight:300; color:#c9d8ef; }
+.ending .sub-line{ font-size:14.5px; color:#a9c3e8; margin-top:18px; line-height:1.75; max-width:460px; }
+.ending .cmd-card{
+  margin-top:34px; border:1px solid rgba(255,255,255,.25); border-radius:14px;
+  background:rgba(255,255,255,.06); padding:22px 26px; max-width:480px;
+}
+.ending .cmd-title{ font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#a9c3e8; font-weight:700; margin-bottom:12px; }
+.ending .cmd-row{ display:flex; gap:12px; margin-bottom:9px; align-items:baseline; }
+.ending .cmd-key{
+  flex:0 0 84px; font-family:'Liberation Mono', monospace; font-size:12.5px; font-weight:700;
+  background:rgba(255,255,255,.14); border-radius:6px; padding:4px 10px; text-align:center;
+}
+.ending .cmd-desc{ font-size:13px; color:#dce6f5; }
+.ending .edition{
+  position:absolute; left:64px; right:64px; bottom:56px;
+  border-top:1px solid rgba(255,255,255,.25); padding-top:18px;
+  display:flex; justify-content:space-between; font-size:11.5px; letter-spacing:2px; color:#a9c3e8; text-transform:uppercase;
+}
+</style>
+</head>
+<body>
+
+<!-- ================= COVER ================= -->
+<div class="cover">
+  <div class="deco-ring ring-a"></div>
+  <div class="deco-ring ring-b"></div>
+  <div class="deco-ring ring-c"></div>
+  <div class="grid-dots"></div>
+
+  <div class="cover-badge">Operator Manual</div>
+  <div class="cover-kicker">CSC Smart Seva</div>
+  <div class="cover-title">
+    Services Guide
+    <span class="thin">16 government services, step-by-step operator reference</span>
+  </div>
+  <div class="cover-sub">
+    Har service ka pura process — customer se kaunse fields aur documents collect honge,
+    portal par banane ke steps, fees ka breakdown, processing time aur common rejection
+    reasons. WhatsApp automation aur operator ka manual kaam, dono ek guide me.
+  </div>
+  <div class="cover-stats">
+    <div class="cover-stat"><div class="n">16</div><div class="l">Services</div></div>
+    <div class="cover-stat"><div class="n">99</div><div class="l">WhatsApp Fields</div></div>
+    <div class="cover-stat"><div class="n">54</div><div class="l">Documents</div></div>
+    <div class="cover-stat"><div class="n">11</div><div class="l">Portals</div></div>
+  </div>
+
+  <div class="cover-edition">
+    <span>Version 3.0 - Video Verified</span>
+    <span>September 2026</span>
+  </div>
+</div>
+
+<!-- ================= MAIN CONTENT ================= -->
+<div class="main-content">
+
+  <!-- ========== SECTION 1: INTRO ========== -->
+  <div class="chapter-header">
+    <div class="section-tag">Section 1</div>
+    <div class="section-title">Guide Kaise Use Karein</div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text lead">
+    Ye guide <b>CSC Smart Seva</b> system ka operator manual hai. System customer se WhatsApp
+    par hi pura kaam leta hai — service pata karna, fields bharna, documents lena aur payment
+    lena. Uske baad government portal par form bharna, OTP/CAPTCHA dalna aur submit karna
+    <b>aapka (operator ka) manual kaam</b> hai. Har service ke section me ye 7 cheezein milengi:
+    service ka description, eligibility, system me configured fields, documents list, portal
+    par step-by-step process, <b>"Sahi Tarike" box</b> (asli process ke facts — SarkariDNA
+    video walkthroughs aur official portals se verify kiye hue), aur operator tips jo rejection
+    se bachate hain.
+  </p>
+
+  <p class="body-text">
+    Is edition (V3.0) me <b>9 step-by-step video walkthroughs</b> ka knowledge seedha guide me
+    merge kiya gaya hai — PAN card (Protean portal), Aay/Jati/Niwas Praman Patra (e-District),
+    Ration Card (Smart PDS 2.0), GST registration aur GSTR-1/3B filing, ITR filing (AY 2026-27
+    ke naye rules) aur Passport apply. Har covered service ke "Sahi Tarike" box me video ka
+    link bhi diya gaya hai — customer ke sawal ka jawab video ke timestamp ke saath check kar
+    sakte ho. Videos dekhne ke liye Quick Reference ke baad wali <b>Video Guide References</b>
+    table use karo.
+  </p>
+
+  <p class="body-text">
+    Knowledge verification ka source: <b>SarkariDNA YouTube channel</b> (youtube.com/@SarkariDNA)
+    ke sarkari services guide videos — is guide me 9 videos ka process seedha verify karke dala
+    gaya hai (PAN, Aay, Jati, Niwas, Ration Card, GST Reg, GST Filing, ITR, Passport) — plus
+    official portals (onlineservices.nsdl.com, incometax.gov.in, gst.gov.in, nfsa.gov.in,
+    passportindia.gov.in, voters.eci.gov.in, beneficiary.nha.gov.in, register.eshram.gov.in,
+    scholarships.gov.in). Isliye jo tareeka is guide me likha hai, wahi portal par asli me
+    chalta hai.
+  </p>
+
+  <p class="body-text">
+    System ka flow simple hai. Customer WhatsApp par message bhejta hai (jaise "pan card banana
+    hai") — AI engine service pehchan leta hai aur fee bata deta hai. Customer CONFIRM karte hi
+    ek-ek karke sawal aate hain, jisme galat jawab turant reject ho jata hai (jaise 12 digit
+    Aadhaar, 10 digit mobile check). Documents photo/PDF me aate hain aur pricing ke baad UPI
+    payment link jata hai. Payment webhook se verify hote hi application number banta hai
+    (CSC-2026-XXXXXX) aur aapke operator WhatsApp par task aata hai. Aap portal par kaam
+    complete karke <b>DONE</b> command se mark karte hain — customer ko confirmation chali jati hai.
+  </p>
+
+  <h3 class="sub"><span class="idx">1.1</span>5 Golden Rules — Ye Kabhi Na Todein</h3>
+
+  <div class="rule-card">
+    <div class="rn">Rule 01</div>
+    <div class="rt">OTP aur CAPTCHA hamesha customer ke saath</div>
+    <div class="rd">Kisi bhi service ka OTP, CAPTCHA ya password automate nahi karte. Portal par
+    OTP customer ke Aadhaar-linked mobile par hi aayega — wo khud dekh kar bolega. Customer se
+    OTP puchna ya share karna mana hai; ye compliance aur trust dono ke liye critical hai.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rn">Rule 02</div>
+    <div class="rt">Payment sirf official link se maano</div>
+    <div class="rd">Payment verify sirf system ke webhook se hota hai. Customer screenshot bheje
+    to usse proof ke roop me kabhi mat lo — "payment ka intezar karein, verification automatic
+    hai" bolo. Fake screenshot fraud ka sabse common tareeka hai.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rn">Rule 03</div>
+    <div class="rt">Sensitive data masked rakho</div>
+    <div class="rd">Aadhaar number chat me bhi mask karke likho (XXXX XXXX 1234). Pura number,
+    password ya OTP kisi bhi message, task note ya receipt me repeat na karo. Documents sirf
+    system ke secure storage me rehte hain.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rn">Rule 04</div>
+    <div class="rt">Duplicate application se bacho</div>
+    <div class="rd">Naya kaam shuru karne se pehle customer ka purana application STATUS se check
+    karo. Ek hi service ke do applications se government fee do baar kat sakti hai aur refund
+    mushkil hota hai. Application number hi single source of truth hai.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rn">Rule 05</div>
+    <div class="rt">Fees aur rules go-live par verify karo</div>
+    <div class="rd">Is guide me fees system ki pricing table se aayi hain. Government portal ke
+    fee aur rules time-to-time badalte hain — PORTAL_MODE LIVE karne se pehle aur mahine me ek
+    baar official portal se verify karte raho.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rn">Rule 06</div>
+    <div class="rt">Aadhaar-linked mobile pehla check hai</div>
+    <div class="rd">Ayushman, E-Shram, Voter ID, NSP — har e-KYC ka OTP customer ke Aadhaar-linked
+    mobile par hi aata hai. Kaam shuru karne se pehle poochho: "ye number Aadhaar se linked hai?"
+    Link nahi hai to pehle Aadhaar center bhejo — warna aadha kaam karke atak jayenge. Saath me
+    customer ka DigiLocker account bhi bana do — documents hamesha safe aur valid rehte hain.</div>
+  </div>
+
+  <h3 class="sub"><span class="idx">1.2</span>Operator Commands — WhatsApp par kaam kaise chalayein</h3>
+  <table>
+    <thead><tr><th style="width:170px">Command</th><th>Kab use karein</th></tr></thead>
+    <tbody>
+      <tr><td><b>QUEUE</b></td><td>Saare pending applications dekhne ke liye — jo payment ke baad aapke kaam ka intezar kar rahe hain.</td></tr>
+      <tr><td><b>DONE CSC-2026-XXXXXX</b></td><td>Portal par submit ho gaya — customer ko confirmation jayegi aur application band hogi.</td></tr>
+      <tr><td><b>ISSUE CSC-2026-XXXXXX [note]</b></td><td>Document me dikkat, rejection, ya customer se extra chahiye — customer ko issue message jayega.</td></tr>
+      <tr><td><b>PAID CSC-2026-XXXXXX</b></td><td>Payment manually confirm karna ho (rare case) — pehle bank statement me zaroor check karo.</td></tr>
+      <tr><td><b>HUMAN</b> / <b>RESUME</b></td><td>Customer "HUMAN" likhe to bot ruk jata hai; kaam poora hone par RESUME se bot wapas chalu.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ========== SERVICE 01: PAN CARD ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">01</span>
+      <div class="svc-titles">
+        <div class="svc-name">PAN Card</div>
+        <div class="svc-cat">Identity &middot; NSDL / Protean Portal</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 166</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    PAN (Permanent Account Number) ek 10-character ka identity number hai jo Income Tax
+    Department jarta hai — bank account, property, investment aur ITR filing ke liye zaroori.
+    Is service me naya PAN card, correction (naam/DOB galat ho to), ya e-PAN ka duplicate
+    order shamil hai. Application NSDL (Protean) portal par Form 49A ke through jati hai aur
+    e-PAN email par, physical card post se aata hai.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun apply kar sakta hai</span><span class="mv">Koi bhi Indian citizen; minor ke liye parent/guardian apply karta hai; Aadhaar mandatory</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">e-PAN 1-2 din (email), physical card 4-6 din (post) — SarkariDNA 2026 video se verify</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 107 + Service 50 + GST 9 = Rs 166</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">1.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Type</th><th style="width:90px">Validation</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Pura Naam</td><td>Text</td><td>Aadhaar se exact</td></tr>
+      <tr><td>2</td><td>Pita ka Naam</td><td>Text</td><td>Naam ke hisaab se</td></tr>
+      <tr><td>3</td><td>Date of Birth</td><td>Date</td><td>DD/MM/YYYY</td></tr>
+      <tr><td>4</td><td>Mobile Number</td><td>Phone</td><td>10 digit, 6-9 se</td></tr>
+      <tr><td>5</td><td>Email</td><td>Email</td><td>SKIP allowed</td></tr>
+      <tr><td>6</td><td>Pura Address</td><td>Text</td><td>PIN code sahit</td></tr>
+      <tr><td>7</td><td>Aadhaar Number</td><td>ID</td><td>12 digit only</td></tr>
+      <tr><td>8</td><td>DOB Proof Type</td><td>Choice</td><td>List se ek — 2026 rule</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">1.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Aadhaar Card</span>
+    <span class="doc-chip">Passport Photo</span>
+    <span class="doc-chip">Signature</span>
+    <span class="doc-chip">DOB Proof <span class="opt">(10th / Birth Cert — ab mandatory)</span></span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">onlineservices.nsdl.com</span>
+    <span class="pk">OTP</span><span class="pv">Customer ke saath</span>
+    <span class="pk">CAPTCHA</span><span class="pv">Manual</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">1.3</span>Portal par banane ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Form 49A select karo:</b> Portal par "New PAN - Indian Citizen (Form 49A)" chuno. Correction ke liye "Changes or Correction in PAN" wala option.</li>
+    <li><b>Category + token:</b> Individual select karke application token generate karo, phir "Submit digitally through e-KYC &amp; e-Sign (Paperless)" choose karo.</li>
+    <li><b>Details bharo:</b> Naam Aadhaar se EXACT same likho — bich me space, spelling, order kuch bhi change na ho. Yahi sabse bada rejection reason hai.</li>
+    <li><b>AO code:</b> Customer ke shehar ka AO code chuno (portal ke AO list me search karo). Galat AO code se application atak jati hai.</li>
+    <li><b>Aadhaar e-KYC:</b> Aadhaar number dalo — OTP customer ke linked mobile par jayega. Customer se hi turant phone/WhatsApp par OTP bolwao aur portal par dalo.</li>
+    <li><b>Photo &amp; signature upload:</b> Photo 3.5x2.5 cm, 20-50 KB, white background; signature khaali page par black ink se, 20-50 KB. System se aayi photos quality check kar lo.</li>
+    <li><b>DOB proof upload (2026 naya rule):</b> Aadhaar ke alawa DOB ka alag proof ab MANDATORY hai — 10th marksheet, birth certificate, voter ID, driving licence, passport, marriage certificate ya magistrate affidavit. Aadhaar ab DOB proof ke liye accept NAHI hota (SarkariDNA video). System ye document WhatsApp par maang chuka hoga.</li>
+    <li><b>Fee payment:</b> Rs 107 portal par (ye customer ke payment me shaamil hai). Payment mode "Demand Draft" nahi — online/card/UPI chuno.</li>
+    <li><b>Acknowledgement:</b> 15-digit acknowledgement number save karke customer ko WhatsApp par bhejo. Ye tracking number hai.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Naam mismatch (Aadhaar vs form) = 60% rejections ka reason. Do baar match karo.</li>
+      <li>Minor applicant ke case me parent ka document aur "representative assessee" details lagti hain.</li>
+      <li>Correction request me purana PAN number bhi customer se le lo aur purana card ki photo bhi.</li>
+      <li>15 din me PAN na aaye to acknowledgement number se NSDL helpline/timeline check karo.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>Fee ka asli hisaab:</b> physical card par govt fee Rs 107 hai; sirf e-PAN (PDF) Rs 66-72. Customer ko pehle poochho — e-PAN sasta aur 1-2 din me email par, physical card 4-6 din post se (SarkariDNA 2026 video).</li>
+      <li><b>Aadhaar ab DOB proof me kaafi NAHI (SarkariDNA PAN video):</b> 2026 se Protean portal par DOB ke liye alag document lagta hai — 10th marksheet, birth certificate, voter ID, DL, passport, marriage certificate ya affidavit. Ye field system me add ho gayi hai (Sawal 8/8), document bhi maanga jayega.</li>
+      <li><b>Draft save karte raho:</b> form bharne ke dauran "Save Draft" dabate raho — portal session expire hone par data loss nahi hota. e-KYC + e-Sign dono customer ke Aadhaar OTP se hote hain.</li>
+      <li><b>Minor PAN (SarkariDNA guide):</b> bachche ke liye birth certificate + parent ka Aadhaar lagta hai; parent hi "representative assessee" banta hai. Bachche ki photo me aankhein khuli honi chahiye.</li>
+      <li><b>Naam ka exact match:</b> Aadhaar me jaisa naam, wahi form me — spelling, space, order sab same. Isi ek galti se sabse zyada applications reject hote hain.</li>
+      <li><b>Pura video:</b> youtu.be/c64iYxZsIPs — New PAN Card Apply 2026 (SarkariDNA)</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 02: ITR FILING ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">02</span>
+      <div class="svc-titles">
+        <div class="svc-name">ITR Filing</div>
+        <div class="svc-cat">Tax &middot; Income Tax e-Filing Portal</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 590</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    Income Tax Return (ITR) me customer apni saal ki income, TDS aur tax declare karta hai —
+    jisme TDS jyada kata ho to refund bhi milta hai. Salaried employees ke liye ITR-1 (Sahaj)
+    aur chhote business ke liye ITR-4 (presumptive) sabse common forms hain. Return file hone
+    ke baad <b>e-verification karna zaroori hai</b>, warna return invalid maana jata hai.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun file kar sakta hai</span><span class="mv">Salary wale, interest income, chhote business (presumptive); PAN + Aadhaar linked hona chahiye</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">Filing same day; refund 20-45 din e-verify ke baad</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 0 + Service 500 + GST 90 = Rs 590</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">2.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>PAN Number</td><td>10 character, uppercase</td></tr>
+      <tr><td>2</td><td>Aadhaar Number</td><td>12 digit, PAN se linked</td></tr>
+      <tr><td>3</td><td>Bank Account</td><td>Refund ke liye, pre-validated best</td></tr>
+      <tr><td>4</td><td>IFSC Code</td><td>Bank branch ka</td></tr>
+      <tr><td>5</td><td>Income Details</td><td>Salary, interest, business ka summary</td></tr>
+      <tr><td>6</td><td>Form 16</td><td>Employer se mila TDS certificate</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">2.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Form 16</span>
+    <span class="doc-chip">Bank Statement</span>
+    <span class="doc-chip">PAN Card</span>
+    <span class="doc-chip">Aadhaar Card</span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">incometax.gov.in</span>
+    <span class="pk">Login</span><span class="pv">Customer ke credentials</span>
+    <span class="pk">e-Verify</span><span class="pv">Aadhaar OTP - customer ke saath</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">2.3</span>Portal par filing ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Documents cross-check:</b> Form 16 ka salary + TDS bank statement se match karo. Koi mismatch ho to pehle customer se clear karo.</li>
+    <li><b>Portal login:</b> incometax.gov.in par customer ke PAN se login. Password customer ka hai — customer se khud type karwao, password kabhi apne paas na rakho.</li>
+    <li><b>AIS/26AS dekho:</b> Annual Information Statement me reported income aur TDS check karo — isme koi unknown entry ho to customer se poochho.</li>
+    <li><b>Form chuno:</b> ITR-1 (salary + 1 house property + interest), ITR-4 (business 44AD/44ADA). Category galat hui to notice aa sakta hai.</li>
+    <li><b>Regime compare:</b> Old vs New regime ka tax compare karo — portal auto-compute karta hai. Customer ko benefit wala option batado.</li>
+    <li><b>Details fill:</b> Income, deductions (80C, 80D agar old regime), TDS schedule, bank details. Aadhaar-bank link verified hona chahiye.</li>
+    <li><b>Submit + e-Verify:</b> Submit ke turant baad e-verification Aadhaar OTP se karo (OTP customer ke mobile par). 30 din ke andar e-verify zaroori, warna return invalid.</li>
+    <li><b>ITR-V bhejo:</b> Acknowledgement download karke customer ko WhatsApp par bhejo — refund status ke liye ye number kaam aayega.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>e-Verify bhulna sabse common galti hai — submit ke baad hi karwa lo, baad me na chhodo.</li>
+      <li>Bank account pre-validated na ho to refund atakta hai — pehle validation karwao.</li>
+      <li>Due date (non-audit) 31 July; late filing par 234F ke under Rs 1,000-5,000 fee lagti hai.</li>
+      <li>Interest income 10,000 se upar ho to ITR zaroori hai, salary kam bhi ho to.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>AIS/26AS reconciliation:</b> Form 16 ka TDS aur bank interest ko AIS aur Form 26AS se match karo — mismatch par defective return notice (139(9)) aa jata hai.</li>
+      <li><b>Regime compare:</b> portal old vs new regime auto-compute karta hai — jis me tax kam ho wahi chuno. New regime me 80C/80D deductions nahi chalti.</li>
+      <li><b>Refund ki 3 preconditions:</b> PAN-Aadhaar linked, bank account pre-validated, aur return e-verified — ek bhi miss hua to refund atak jata hai.</li>
+      <li><b>AY 2026-27 ke naye rules (video course):</b> Income Tax Act 2025 lagu — new regime me Section 87A rebate aur marginal relief ka fayda check karo; 5 income heads (Salary, House Property, PGBP, Capital Gains, Other Sources) ka sahi classification karo.</li>
+      <li><b>Form selection quick guide:</b> ITR-1 salaried ke liye, ITR-2 capital gains/multiple property wale ke liye, ITR-4 presumptive business (44AD/44ADA) ke liye. Capital gains wale ITR-1 me na bharo — notice aayega.</li>
+      <li><b>Pura video course:</b> youtu.be/RwsPEBP1wfs — Complete ITR Filing AY 2026-27 (SarkariDNA)</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 03: GST REGISTRATION ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">03</span>
+      <div class="svc-titles">
+        <div class="svc-name">GST Registration</div>
+        <div class="svc-cat">Business &middot; GST Portal (REG-01)</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 590</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    GSTIN ek 15-character ka business tax registration hai. Goods me 40 lakh aur services me
+    20 lakh annual turnover ke upar ye mandatory hai — chahe turnover kam ho, interstate
+    supply ya e-commerce bechne ke liye bhi chahiye. Registration ke baad customer ko 15-digit
+    GSTIN aur certificate milta hai jisse wo tax invoice bana sakta hai aur ITC claim kar sakta hai.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun register karwa sakta hai</span><span class="mv">Trader, manufacturer, service provider; PAN firm/proprietor ka chahiye; mobile-aadhaar linked</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">ARN ke 7 working days (query na aaye to); GSTIN instant issue bhi hota hai aajkal</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 0 + Service 500 + GST 90 = Rs 590</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">3.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Business ka Naam</td><td>Trade name, PAN se match</td></tr>
+      <tr><td>2</td><td>PAN Number</td><td>Proprietor/firm ka PAN</td></tr>
+      <tr><td>3</td><td>Pura Address</td><td>Principal place of business</td></tr>
+      <tr><td>4</td><td>Bank Account</td><td>Account number</td></tr>
+      <tr><td>5</td><td>Mobile Number</td><td>OTP verification ke liye</td></tr>
+      <tr><td>6</td><td>Email</td><td>ARN/certificate yahi aayega</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">3.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">PAN Card</span>
+    <span class="doc-chip">Aadhaar Card</span>
+    <span class="doc-chip">Bank Statement</span>
+    <span class="doc-chip">Passport Photo</span>
+    <span class="doc-chip">Business Place Proof <span class="opt">(rent agreement / NOC / bijli bill)</span></span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">gst.gov.in</span>
+    <span class="pk">OTP</span><span class="pv">Mobile + Email dono</span>
+    <span class="pk">Sign</span><span class="pv">EVC (Aadhaar OTP)</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">3.3</span>Portal par registration ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Part-A (REG-01):</b> gst.gov.in ke Services, Registration, New Registration me jaao. Taxpayer type (Proprietorship etc.), PAN, mobile, email dalo — TRN generate hoga.</li>
+    <li><b>TRN se login:</b> TRN 15 din valid hota hai. TRN se login karke mobile + email dono par OTP verify karo (customer ke devices par aayenge).</li>
+    <li><b>Part-B bharna:</b> Business details, trade name, HSN/SAC code, principal address (state, district, jurisdiction officer auto-select hota hai).</li>
+    <li><b>Address proof:</b> Electricity bill (3 mahine purana nahi), rent agreement + owner ka bill, ya property tax receipt. Ye docs system ke alawa customer se lo.</li>
+    <li><b>Promoter details:</b> Proprietor ka photo, Aadhaar, PAN, personal address, bank account number + IFSC. Bank statement 3 mahine ka upload.</li>
+    <li><b>Verification:</b> Authorized signatory select karke EVC (Aadhaar OTP) se submit karo — ARN number turant milta hai.</li>
+    <li><b>ARN track:</b> Officer query aaye to 7 din me jawab dena hota hai, warna application reject. Approved hote hi GSTIN aur certificate email par aa jata hai.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Address proof sabse zyada query ka reason hai — naya electricity bill aur clear rent agreement rakho.</li>
+      <li>Trade name me special characters ya galat spelling se jurisdiction issue hota hai.</li>
+      <li>Query ka jawab 7 din me dena mandatory — deadline miss hua to application cancel.</li>
+      <li>Registration ke baad 6 mahine me pehla return bhi file karna zaroori hai, warna GSTIN suspend.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>Aadhaar authentication karwao:</b> proprietor ke Aadhaar OTP se authentication ho gayi to physical verification skip hoti hai aur approval 3-7 din me aa jata hai.</li>
+      <li><b>HSN/SAC sahi chuno:</b> turnover ke hisaab se digits badhte hain (5 crore tak: 4-digit HSN) — galat code se baad me notice aata hai.</li>
+      <li><b>Certificate REG-06:</b> approve hote hi GST certificate email par aata hai — customer ko PDF bhejo aur dukan par lagane ko kaho.</li>
+      <li><b>Aadhaar authentication opt-in karo (SarkariDNA GST video):</b> Rule 14A ke under Aadhaar authentication chuno — isse physical verification skip hoti hai aur GSTIN kuch ghanton me issue ho jata hai, form bharne wale din hi.</li>
+      <li><b>Place proof ke 3 options:</b> apni jagah hai to electricity bill (owner ka NOC rent me ho to agreement + bill), rented ho to rent agreement + owner ka bill. Ye docs mandatory hain — system ab WhatsApp par ye alag se maangta hai.</li>
+      <li><b>EVC ya DSC:</b> proprietorship me EVC (Aadhaar OTP) se verify hota hai; company/LLP me DSC (digital signature) lagta hai. Submit ke baad registered email par e-KYC link bhi verify karna hota hai.</li>
+      <li><b>Pura video:</b> youtu.be/-m-bepELXHw — GST Registration 2026 full process (SarkariDNA)</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 04: GST RETURN ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">04</span>
+      <div class="svc-titles">
+        <div class="svc-name">GST Return Filing</div>
+        <div class="svc-cat">Business &middot; GSTR-1 + GSTR-3B</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 354</div><div class="fee-label">Customer Pays / Month</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    Registered business ko har mahine (ya QRMP scheme me quarterly) returns file karni hoti
+    hain — GSTR-1 me sales invoices aur GSTR-3B me tax ka summary aur payment. Turnover 5
+    crore se kam wale QRMP chun sakte hain: sales quarterly, tax payment monthly. Late filing
+    par daily late fee lagti hai aur customer ka ITC bhi ruk jata hai.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kab-kab file hoti hai</span><span class="mv">GSTR-1: 11 tareekh (monthly) / 13 (QRMP); GSTR-3B: 20-22 tareekh</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">Same day filing (data complete ho to 30-40 minute)</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 0 + Service 300 + GST 54 = Rs 354</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">4.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>GSTIN</td><td>15 character, active status</td></tr>
+      <tr><td>2</td><td>Sales Data</td><td>Month ki sales register (Excel/PDF)</td></tr>
+      <tr><td>3</td><td>Purchase Data</td><td>Purchase + ITC ke invoices</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">4.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Sales Register</span>
+    <span class="doc-chip">Purchase Register</span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">gst.gov.in</span>
+    <span class="pk">Tax Payment</span><span class="pv">Customer ke bank/UPI se challan</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">4.3</span>Return filing ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Data lo:</b> Customer se sales register aur purchase invoices Excel/PDF me lo. B2B (GSTIN wale) aur B2C (consumer) invoices alag karo.</li>
+    <li><b>GSTR-1:</b> Portal login karke Returns Dashboard me period chuno. B2B invoices ek-ek karke (ya offline tool se JSON upload), B2C ka summary rate-wise dalo.</li>
+    <li><b>GSTR-3B:</b> Auto-drafted liability check karo — outward tax, ITC claim, aur net payable. ITC tabhi claim karo jab supplier ne apni GSTR-1 file ki ho (2B me dikhta hai).</li>
+    <li><b>Tax payment:</b> Payable ho to electronic cash challan banao — customer ke net banking/UPI se pay karwao (ye customer ka direct payment hai, aapke payment me nahi).</li>
+    <li><b>Late na karo:</b> GSTR-1 ki 11 tareekh aur 3B ki 20 tareekh (QRMP me 22) hard deadline hai. Late fee Rs 50/day (nil return me Rs 20/day) per return lagti hai.</li>
+    <li><b>Acknowledgement bhejo:</b> Filed return ka ARN/reference number customer ko WhatsApp par bhejo aur next month ki date yaad dila do.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Supplier ne GSTR-1 file nahi ki to customer ka ITC claim nahi hoga — pehle supplier ko yaad dilao.</li>
+      <li>Nil return bhi file karna zaroori hai — file na karne par GSTIN status "pending" ho jata hai.</li>
+      <li>Invoice number duplicate ya gap na ho — sequential numbering check karo.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>Interest ka hisaab:</b> tax late paye to 18% annual interest lagta hai — 3B time par bharna sirf late fee se nahi, interest se bhi bachata hai.</li>
+      <li><b>QRMP option:</b> turnover 5 crore se kam wale GSTR-1 quarterly (13 tarikh) + 3B monthly chun sakte hain — chhote dukaan walo ke liye aasan.</li>
+      <li><b>E-invoice:</b> turnover 5 crore+ ho to e-invoice (IRN) mandatory hai — aise customers ko pehle se bata do.</li>
+      <li><b>GSTR-1 ke important tables (SarkariDNA filing video):</b> Table 6 exports, Table 7 B2C supplies, Table 14/15 e-commerce (Swiggy/Zomato jaise ECO ke through bechne wale) — galat table me entry se mismatch notice aata hai.</li>
+      <li><b>Galti ho jaye to GSTR-1A:</b> GSTR-1 file hone ke baad bhi GSTR-3B se pehle GSTR-1A me amendment karke B2C invoice values sudhar sakte ho — 3B hamesha sudhar ke baad file karo.</li>
+      <li><b>Rule 86B yaad rakho:</b> jis month taxable supply 50 lakh cross kare to output tax ka kam se kam 1% cash me dena padta hai — ITC ke bharose sirf adjust nahi hota.</li>
+      <li><b>RCM ka hisaab alag rakho:</b> import of services, GTA jaise reverse charge supplies 3B me alag table me aate hain — ye 2B se auto-populate hota hai ya manual calculate hota hai, ITC iska claim kar sakte ho.</li>
+      <li><b>Pura video:</b> youtu.be/DZZYME0bRto — GST Return Filing practical training (SarkariDNA)</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 05: INCOME CERTIFICATE ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">05</span>
+      <div class="svc-titles">
+        <div class="svc-name">Income Certificate</div>
+        <div class="svc-cat">Revenue &middot; State e-District Portal</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 74</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    Income certificate par Tehsildar/SDM customer ke parivar ki annual income declare karta
+    hai — scholarship, fee concession, scheme benefits aur kuch government jobs ke liye lagta
+    hai. Ye state ke e-district portal se banta hai aur aam taur par ek financial year ke liye
+    valid rehta hai. Har state ka apna portal hai (jaise Rajasthan me edistrict.rajasthan.gov.in),
+    process sab jagah almost same hai.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun apply kar sakta hai</span><span class="mv">State ka resident jo income proof maang raha ho; Aadhaar + address proof mandatory</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">7-15 din (tehsil verification ke baad)</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 15 + Service 50 + GST 9 = Rs 74 (e-District verified fee)</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">5.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Pura Naam</td><td>Aadhaar ke hisaab se</td></tr>
+      <tr><td>2</td><td>Pita ka Naam</td><td>Ya pati ka naam (married)</td></tr>
+      <tr><td>3</td><td>Date of Birth</td><td>DD/MM/YYYY</td></tr>
+      <tr><td>4</td><td>Mobile Number</td><td>10 digit</td></tr>
+      <tr><td>5</td><td>Pura Address</td><td>Tehsil/Block ke saath</td></tr>
+      <tr><td>6</td><td>Varshik Aay</td><td>Parivar ki annual income (approx)</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">5.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Aadhaar Card</span>
+    <span class="doc-chip">Income Proof</span>
+    <span class="doc-chip">Passport Photo</span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">State e-District (state-wise)</span>
+    <span class="pk">OTP</span><span class="pv">Aadhaar e-KYC - customer ke saath</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">5.3</span>Certificate banane ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>State portal par registration:</b> e-district portal par Aadhaar e-KYC se customer ka account banao — OTP customer ke mobile par hi aayega.</li>
+    <li><b>Application form:</b> Income certificate service select karke naam, pita ka naam, DOB, address, parivar members aur declared annual income bharo.</li>
+    <li><b>Income proof:</b> Salary wale ka salary slip/employer certificate; business wale ka ITR; kheti wale ka patwari report; naukri na hone par self-declaration format me.</li>
+    <li><b>Upload + submit:</b> Aadhaar, photo aur income proof upload karke application submit karo — registration number save karo.</li>
+    <li><b>Verification follow-up:</b> Patwari/Kanungo report aur Tehsildar verification hoti hai. Status portal par check karte raho — document lage to customer se turant lo.</li>
+    <li><b>Certificate download:</b> Issue hone par PDF download karke customer ko bhejo. DigiLocker me bhi sync hota hai. Validity (1 saal/FY) note karwao.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Address ke tehsil/district ka jawab portal ke jurisdiction se match hona chahiye, warna application transfer hoti hai.</li>
+      <li>Income declaration threshold se jyada likhi to scholarship reject ho sakti hai — customer ke scheme ki limit poochho.</li>
+      <li>Verification me patwari se milna pad sakta hai — customer ko pehle se bata do.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>Validity sirf 1 saal:</b> certificate current financial year tak valid hota hai — scholarship har saal fresh maangti hai (repeat business, customer ko yaad dilate raho).</li>
+      <li><b>Income proof source-wise:</b> private job → employer certificate ya salary slip; sarkari naukri → salary slip; kheti → patwari report; kaam na ho → notary se self-declaration affidavit.</li>
+      <li><b>Ration card bhi lagta hai</b> kai states me — pehle hi manga lo, verification stage me lagega.</li>
+      <li><b>Income sources sahi declare karo (SarkariDNA Aay video):</b> e-District form me income ke sources alag puchte hain — kheti, business, mazdoori. Har source ki detail bharke hi total annual family income banta hai, approx likhne se verification me dikkat hoti hai.</li>
+      <li><b>Swapramani Ghoshna (self-attested declaration):</b> photo + Aadhaar ke saath self-declaration form bhi upload hota hai jo customer ne khud sign kiya ho.</li>
+      <li><b>Payment error par double pay na karo:</b> fee payment me server hang/error ho to pehle bank statement me paisa kata ya nahi dekho, phir hi retry — video me ye common problem bataya gaya hai. Digitally signed certificate portal se hi download hota hai.</li>
+      <li><b>Pura video:</b> youtu.be/x03LgcZUiGQ — Aay Praman Patra online apply (SarkariDNA)</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 06: CASTE CERTIFICATE ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">06</span>
+      <div class="svc-titles">
+        <div class="svc-name">Caste Certificate</div>
+        <div class="svc-cat">Revenue &middot; SDM / e-District Portal</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 74</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    Caste certificate SC/ST/OBC status ka official proof hai — school-college admission, fee
+    scholarship, government job reservation aur seat allotment ke liye lagta hai. Ye e-district
+    portal se apply hota hai aur SDM/Tehsildar issue karte hain. Caste proof dena sabse important
+    hota hai — sirf apna kehna kaafi nahi hota, family lineage ka document chahiye.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun apply kar sakta hai</span><span class="mv">State ke SC/ST/OBC list me aane wali jati ke resident; OBC ke liye non-creamy layer alag se</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">15-30 din (SDM verification ke saath)</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 15 + Service 50 + GST 9 = Rs 74 (e-District verified fee)</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">6.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Pura Naam</td><td>Aadhaar ke hisaab se</td></tr>
+      <tr><td>2</td><td>Pita ka Naam</td><td>Caste lineage isi se verify hota hai</td></tr>
+      <tr><td>3</td><td>Date of Birth</td><td>DD/MM/YYYY</td></tr>
+      <tr><td>4</td><td>Mobile Number</td><td>10 digit</td></tr>
+      <tr><td>5</td><td>Pura Address</td><td>Village/Tehsil/District</td></tr>
+      <tr><td>6</td><td>Jati</td><td>SC/ST/OBC list ke hisaab se exact naam</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">6.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Aadhaar Card</span>
+    <span class="doc-chip">Pariwar Caste Proof</span>
+    <span class="doc-chip">Passport Photo</span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">State e-District (state-wise)</span>
+    <span class="pk">Verification</span><span class="pv">Patwari + SDM office</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">6.3</span>Certificate banane ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Caste proof pehle check karo:</b> Pita/dada ka purana caste certificate, school TC jisme caste likhi ho, ya gram sevak/patwari report — inme se kam se kam ek chahiye.</li>
+    <li><b>e-District application:</b> Portal par Aadhaar e-KYC se login karke caste certificate service chuno aur saare fields bharo. Jati ka naam state list se EXACT chuno.</li>
+    <li><b>Blood relation proof:</b> Pita ka Aadhaar, family ka ration card, ya sibling ka caste certificate attach karo — isse lineage verify hota hai.</li>
+    <li><b>Upload + submit:</b> Photo, Aadhaar, caste proof upload karo. Registration number customer ko bhejo.</li>
+    <li><b>Verification stage:</b> Patwari report aur SDM inquiry hoti hai — kabhi-kabhi witness bhi. Status har 2-3 din me check karo.</li>
+    <li><b>Issue + download:</b> Certificate PDF download karke bhejo. Original me NAAM, JATI, aur ISSUING AUTHORITY teeno verify karo.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>OBC certificate ke saath non-creamy layer certificate alag se banti hai — dono ka poochho.</li>
+      <li>Jati ki spelling state list se ek letter alag hui to reject — list se copy karo.</li>
+      <li>Purana certificate hai to uski copy se "renewal/correction" jaldi hota hai, naya application lamba padta hai.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>School LC sabse strong proof:</b> pita/dada ka school leaving certificate jisme caste likhi ho — yahi sabse aam aur manni hui family caste proof hai.</li>
+      <li><b>Affidavit ready rakho:</b> kai states me self-declaration affidavit (stamp paper) bhi lagti hai — court/e-mitra se pehle hi banwa lo.</li>
+      <li><b>UP e-District fee Rs 15 hai (SarkariDNA Jati video):</b> caste certificate ki govt fee sirf Rs 15 lagti hai — customer ko Rs 74 me service charge + GST samjhao. Processing 15-30 din state ke hisaab se.</li>
+      <li><b>Aadhaar authentication pehle (SarkariDNA Jati video):</b> e-Saathi/e-District login ke baad caste certificate select karte hi Aadhaar-based authentication hota hai — Aadhaar-linked mobile zaroori (Rule 06).</li>
+      <li><b>File size limits ka dhyan:</b> passport photo max 50 KB aur ID proof max 100 KB chahiye — badi photo ko resize karke upload karo, warna portal reject kar deta hai. Self-declaration form bhi lagta hai.</li>
+      <li><b>Confirmation na mile to (video ka important point):</b> payment ke baad turant confirmation na dikhe to application number se "Service Fee Payment" section me jaakar save/submit karo — warna form government tak pahunchta hi nahi.</li>
+      <li><b>Download Nistarit Avedan se:</b> process hone ke baad digitally signed certificate "Disposed Application (Nistarit Avedan)" section se download hota hai.</li>
+      <li><b>Pura video:</b> youtu.be/0YPnxPPtRV4 — Jati Praman Patra online apply (SarkariDNA)</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 07: DOMICILE ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">07</span>
+      <div class="svc-titles">
+        <div class="svc-name">Mool Niwas / Domicile Certificate</div>
+        <div class="svc-cat">Revenue &middot; State e-District Portal</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 74</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    Domicile (mool niwas) certificate ye prove karta hai ki customer us state ka permanent
+    resident hai — state quota admissions, state government jobs, scholarship aur kuch licenses
+    ke liye lagta hai. Aam niyam hai ki customer state me paida ho ya kam se kam 10 saal se
+    rahe ho. Ye bhi e-district portal se, Tehsildar ke signature se issue hota hai.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun apply kar sakta hai</span><span class="mv">State me paida hua ya 10+ saal se rahne wala resident (state-wise rules thode alag)</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">15-30 din (verification ke saath)</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 15 + Service 50 + GST 9 = Rs 74 (e-District verified fee)</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">7.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Pura Naam</td><td>Aadhaar ke hisaab se</td></tr>
+      <tr><td>2</td><td>Pita ka Naam</td><td>Family residence link ke liye</td></tr>
+      <tr><td>3</td><td>Date of Birth</td><td>DD/MM/YYYY</td></tr>
+      <tr><td>4</td><td>Mobile Number</td><td>10 digit</td></tr>
+      <tr><td>5</td><td>Pura Address</td><td>Jis state ka certificate chahiye</td></tr>
+      <tr><td>6</td><td>Rehne ki Avadhi</td><td>Kitne saal se state me rahe (approx)</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">7.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Aadhaar Card</span>
+    <span class="doc-chip">Niwas Proof</span>
+    <span class="doc-chip">Passport Photo</span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">State e-District (state-wise)</span>
+    <span class="pk">Verification</span><span class="pv">Patwari/Ward + Tehsildar</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">7.3</span>Certificate banane ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Niwas proof strong lo:</b> Ration card, bijli bill (3 mahine), property papers, ya school certificate — jis state ki study hui wahan ke documents sabse strong hain.</li>
+    <li><b>Application bharo:</b> e-district par domicile service select karke saare fields bharo. "Rehne ki avadhi" ka jawab documents se match hona chahiye.</li>
+    <li><b>Pita/family documents:</b> Pita ka Aadhaar/voter ID jis state ka hai, wahi state ka certificate banega — isliye pita ke documents bhi attach karo.</li>
+    <li><b>Submit + track:</b> Registration number note karo. Patwari/ward officer verification karega, phir Tehsildar approval.</li>
+    <li><b>Download + verify:</b> Certificate me resident-since date aur issuing authority check karo, PDF customer ko bhejo.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Abhi-abhi shift hue customers ka case lamba chalta hai — school/property documents se hi prove hota hai.</li>
+      <li>Do state ke documents mix na karo — application usi state ke portal par hogi jis state ka certificate chahiye.</li>
+      <li>Job/admission ki deadline poochho — 30 din ka time lag sakta hai, pehle bata do.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>State rules alag-alag:</b> MP/CG jaise states me voter ID + Aadhaar copy se bhi ban jata hai; kuch states me 5-10 saal niwas ka proof chahiye — portal ki document list pehle padho.</li>
+      <li><b>Minor ke liye parents ka:</b> bachchon ka domicile pita/mata ke certificate se ban jata hai — alag se poora process nahi lagta.</li>
+      <li><b>Shaadi ke baad mahila:</b> pati ke state ke niwas par mahila ka domicile banta hai — vivah ka proof (marriage certificate) lagega.</li>
+      <li><b>Aadhaar KYC mandatory hai (SarkariDNA Niwas video):</b> e-District par domicile select karte hi Aadhaar KYC compulsory hota hai — bina KYC application aage nahi badhti. Aadhaar-linked mobile ready rakho.</li>
+      <li><b>PDF se password hatao (video ka special tip):</b> jo bhi PDF upload karo (Aadhaar, documents) — uska password pehle hi remove kar lo. Password-protected file portal par upload nahi hoti, reject ho jati hai.</li>
+      <li><b>UP me fee Rs 15, time ~1 hafta:</b> video ke hisaab se domicile application fee Rs 15 hai aur certificate lagbhag ek hafte me ban jata hai — status portal par track karo, digitally signed PDF download karo.</li>
+      <li><b>Pura video:</b> youtu.be/n8jCAgHlqEs — Niwas Praman Patra online apply 2026 (SarkariDNA)</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 08: BIRTH CERTIFICATE ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">08</span>
+      <div class="svc-titles">
+        <div class="svc-name">Birth Certificate</div>
+        <div class="svc-cat">Civil Registry &middot; CRSORGI / Municipal Portal</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 79</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    Birth certificate school admission, Aadhaar, passport aur har legal kaam ki pehli zaroorat
+    hai. Hospital me janm hue bachche ka record Civil Registration System (CRS) me already hota
+    hai — hamara kaam us record se certificate nikalwana aur naam add karwana hota hai. Janm ke
+    21 din ke andar registration free hai; der ho jane par affidavit aur fine lagta hai.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun apply kar sakta hai</span><span class="mv">Bachche ke mata-pita (hospital receipt wale); bade bachche ke liye parents ke documents</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">7-15 din (naam addition ke saath 30-60 din ho sakta hai)</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 20 + Service 50 + GST 9 = Rs 79</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">8.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Bachche ka Naam</td><td>English me, spelling final</td></tr>
+      <tr><td>2</td><td>Pita ka Naam</td><td>Aadhaar ke hisaab se</td></tr>
+      <tr><td>3</td><td>Mata ka Naam</td><td>Aadhaar ke hisaab se</td></tr>
+      <tr><td>4</td><td>Date of Birth</td><td>Hospital receipt se match</td></tr>
+      <tr><td>5</td><td>Janm Sthan</td><td>Hospital/ghar ka naam + shehar</td></tr>
+      <tr><td>6</td><td>Mobile Number</td><td>10 digit</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">8.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Aspatal Receipt</span>
+    <span class="doc-chip">Aadhaar Card</span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">crsorgi.gov.in ya municipal portal</span>
+    <span class="pk">Registrar</span><span class="pv">Nagar Nigam / Gram Panchayat</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">8.3</span>Certificate banane ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Hospital receipt check:</b> Receipt par bachche ka provisional naam, janm ka date-time aur hospital ka medical officer in-charge ka naam hona chahiye.</li>
+    <li><b>Record search:</b> CRSORGI ya municipal portal par "birth search" me pita ka naam + janm date + hospital se record dhundo. Record mil gaya to direct certificate.</li>
+    <li><b>Naam addition (agar nahi hai):</b> Record me naam khali hota hai to "name inclusion" form bharo — dono parents ke Aadhaar, hospital receipt aur affidavit lagta hai. Iska time alag hota hai (1-2 mahine).</li>
+    <li><b>Late registration:</b> 21 din se 1 saal ke andar fine ke saath affidavit; 1 saal ke baad Executive Magistrate ka order lagta hai — ye customer ko pehle se bata do.</li>
+    <li><b>Download + verify:</b> Certificate me bachche ka naam, parents ke naam, janm date aur registration number verify karke bhejo.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Naam ki spelling final karke hi form bharo — baad me correction lamba process hai.</li>
+      <li>Ghar me hua janm ho to Asha worker/ANM ka report gram panchayat se lagwana hota hai.</li>
+      <li>School admission me aksar name-inclusion bhi saath chahiye hota hai — pehle hi poochho.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>Naye niyam ka fayda (SarkariDNA guide):</b> ab digital birth certificate hi school admission, DL, voter card, sarkari naukri aur passport ka single document maana jata hai — isliye ye sabse pehle banwana chahiye.</li>
+      <li><b>Digital download:</b> certificate e-district/CRS portal se PDF me milta hai aur DigiLocker me bhi sync hota hai — print karke bhi le lo.</li>
+      <li><b>Ghar ka janm:</b> ASHA worker/ANM ya pradhan ka report lagwao — hospital receipt nahi hoga to yahi proof banega.</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 09: DEATH CERTIFICATE ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">09</span>
+      <div class="svc-titles">
+        <div class="svc-name">Death Certificate</div>
+        <div class="svc-cat">Civil Registry &middot; CRSORGI / Municipal Portal</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 79</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    Death certificate pension transfer, bank account settle karne, insurance claim aur
+    property ke naam badalne ke liye zaroori legal document hai. Isme sensitivity ka dhyan
+    rakhte hue jaldi aur sahi kaam karna hota hai — 21 din ke andar registration free hota
+    hai. Hospital death summary aur cremation/burial certificate do main proof hain.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun apply kar sakta hai</span><span class="mv">Parivar ka member (aavedak); nominee/legal heir ke kaam ke liye multiple copies lo</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">7-15 din</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 20 + Service 50 + GST 9 = Rs 79</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">9.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Swargiya ka Naam</td><td>Aadhaar/voter ID ke hisaab se</td></tr>
+      <tr><td>2</td><td>Mrityu Tarikh</td><td>DD/MM/YYYY, hospital receipt se</td></tr>
+      <tr><td>3</td><td>Mrityu Sthan</td><td>Hospital/ghar + shehar</td></tr>
+      <tr><td>4</td><td>Aavedak ka Naam</td><td>Parivar member jo apply kar raha hai</td></tr>
+      <tr><td>5</td><td>Mobile Number</td><td>Aavedak ka 10 digit</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">9.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Cremation Certificate</span>
+    <span class="doc-chip">Aavedak ka Aadhaar</span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">crsorgi.gov.in ya municipal portal</span>
+    <span class="pk">Registrar</span><span class="pv">Nagar Nigam / Gram Panchayat</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">9.3</span>Certificate banane ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Proof jama karo:</b> Hospital death summary (hospital me hua ho) ya cremation ground ka receipt, swargiya ka Aadhaar aur aavedak ka Aadhaar.</li>
+    <li><b>Record search:</b> CRS portal par mrityu record search karo — pita/pati ka naam + date se. Medical officer ne record kiya hoga to seedha certificate.</li>
+    <li><b>Application bharo:</b> Swargiya ka pura naam, umar, mrityu ki date-sthaan, aavedak ka relation aur address. Ghar par mrityu hui ho to Asha/pradhan ka report.</li>
+    <li><b>Submit + follow-up:</b> Registrar verification ke baad certificate issue hota hai. Pension/bank ke liye 5-6 copies print karwao.</li>
+    <li><b>Legal heir ke aage ke kaam:</b> Customer ko batao ki pension transfer/insurance me death certificate + legal heir certificate dono lagenge (alag service hai).</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Naam Aadhaar ke EXACT matching se lo — bank/pension me mismatch hoti hai to kaam rukta hai.</li>
+      <li>21 din ke andar register karwao — der se fine aur affidavit lagega.</li>
+      <li>Aavedak ka relation form me sahi likho (pita/pati/beta) — legal heir process isi se chalta hai.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>Hospital death ka MCCD form:</b> doctor se cause-of-death (MCCD) form lena zaroori hai — isi par record banta hai, cremation receipt sirf support karta hai.</li>
+      <li><b>21 din ki deadline:</b> andar register free; 1 saal tak fine ke saath; uske baad Magistrate order — ye time-sensitive kaam hai, turant karo.</li>
+      <li><b>Copies ka math:</b> pension, insurance, bank, property — har jagah 1-2 certified copies chahiye; ek baar me 5-6 print nikalwao.</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 10: VOTER ID ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">10</span>
+      <div class="svc-titles">
+        <div class="svc-name">Voter ID (New / Correction)</div>
+        <div class="svc-cat">Election &middot; NVSP / Voters' Service Portal</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 59</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    Voter ID (EPIC) vote dalne ka official card hai aur age+address ka strong proof bhi. Naye
+    voter ke liye Form 6, correction ya address shift ke liye Form 8 lagta hai. Age 18+ honi
+    chahiye qualifying date (1 January) ke hisaab se. Application ke baad BLO ka verification
+    (ghar visit) hota hai, phir EPIC card 30-45 din me aata hai.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun apply kar sakta hai</span><span class="mv">18+ Indian citizen (qualifying date 1 Jan); correction ke liye purana EPIC number</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">30-45 din (BLO verification ke baad)</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 0 (free) + Service 50 + GST 9 = Rs 59</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">10.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Pura Naam</td><td>English + regional me spelling</td></tr>
+      <tr><td>2</td><td>Date of Birth</td><td>Ya umar qualifying date par</td></tr>
+      <tr><td>3</td><td>Sambandhi ka Naam</td><td>Pita/Mata/Pati (relation ke saath)</td></tr>
+      <tr><td>4</td><td>Mobile Number</td><td>OTP + BLO contact ke liye</td></tr>
+      <tr><td>5</td><td>Pura Address</td><td>Booth level tak ka address</td></tr>
+      <tr><td>6</td><td>Constituency</td><td>Assembly/Parliament constituency</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">10.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Aadhaar Card</span>
+    <span class="doc-chip">Passport Photo</span>
+    <span class="doc-chip">Age Proof</span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">voters.eci.gov.in (pehle nvsp.in)</span>
+    <span class="pk">Verification</span><span class="pv">BLO ghar visit</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">10.3</span>Application ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Form chuno:</b> Form 6 (naya voter), Form 8 (correction/shifting), Form 7 (objection). Correction me purana EPIC number zaroor lo.</li>
+    <li><b>Portal login:</b> voters.eci.gov.in par mobile number se registration + OTP. Aadhaar e-KYC se details auto-fill ho jati hain.</li>
+    <li><b>Details bharo:</b> Naam (English + local language), DOB, sambandhi ka naam relation ke saath, aur adhoolg/polling booth ke hisaab se address.</li>
+    <li><b>Photo + docs:</b> Live photo ya upload; age proof (birth certificate/10th marksheet/Aadhaar) aur address proof upload karo.</li>
+    <li><b>Submit + reference:</b> Application reference number customer ko bhejo. BLO ka naam portal par dikh jayega.</li>
+    <li><b>BLO verification:</b> BLO ghar aa kar verify karta hai — customer ko pehle se bata do taaki ghar par mile. Status portal par har hafte check karo.</li>
+    <li><b>EPIC issue:</b> Card post se aata hai; e-EPIC PDF turant download hota hai (Aadhaar-linked mobile se).</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Address galat constituency me dalne se application transfer/reject hoti hai — booth poochho.</li>
+      <li>Form 6 me umar DOB se kam aayi to age proof strong chahiye — 10th marksheet best.</li>
+      <li>Aadhaar-Voter linking bhi kara do (Form 6B) — election commission ki requirement hai.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>Age-proof ki official list (ECI Form 6):</b> birth certificate, Aadhaar, PAN, passport, ya 10th marksheet — inme se koi ek. Sabse strong: birth certificate ya marksheet.</li>
+      <li><b>17 saal wale bhi apply karein:</b> jo jald 18 ke honge wo Form 6 advance me bhar sakte hain — naam list me jaldi jud jata hai.</li>
+      <li><b>SIR/draft roll check (SarkariDNA guide):</b> election se pehle voter list ka revision hota hai — naam list me hai ya nahi, voters.eci.gov.in par pehle check karo; asli voting entry list me naam hi hai.</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 11: AYUSHMAN CARD ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">11</span>
+      <div class="svc-titles">
+        <div class="svc-name">Ayushman Card</div>
+        <div class="svc-cat">Health &middot; PM-JAY / NHA Beneficiary Portal</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 30</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    Ayushman Bharat (PM-JAY) card se parivar ko har saal 5 lakh tak ka free hospitalization
+    milta hai — empanelled government/private hospitals me. Card banane se pehle eligibility
+    check hoti hai (SECC 2018 / state list me parivar ka naam hona chahiye), phir Aadhaar
+    e-KYC aur ration card se family members add hote hain.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun banwa sakta hai</span><span class="mv">Eligible list (SECC/state) me shamil parivar; Aadhaar-linked mobile zaroori</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">Same day - 3 din (e-KYC smooth ho to turant)</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 0 (free) + Service 30 + GST 0 = Rs 30</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">11.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Pura Naam</td><td>Ration card se match</td></tr>
+      <tr><td>2</td><td>Mobile Number</td><td>Aadhaar se linked</td></tr>
+      <tr><td>3</td><td>Aadhaar Number</td><td>12 digit (masked hi rakho)</td></tr>
+      <tr><td>4</td><td>Ration Card</td><td>Number, state ke hisaab se</td></tr>
+      <tr><td>5</td><td>State-District</td><td>Residence ka</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">11.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Aadhaar Card</span>
+    <span class="doc-chip">Ration Card</span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">beneficiary.nha.gov.in</span>
+    <span class="pk">e-KYC</span><span class="pv">Aadhaar OTP - customer ke saath</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">11.3</span>Card banane ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Eligibility check:</b> Portal/app par mobile ya ration card se parivar search karo. Naam list me nahi to state ki Arogya Mitra desk se complaint/survey line batana hoga.</li>
+    <li><b>Parivar verify:</b> Ration card se family members ka naam match karo — jo members add nahi hain unki details portal par add hoti hain.</li>
+    <li><b>Aadhaar e-KYC:</b> Har adult member ka Aadhaar OTP verification — OTP customer ke mobile par aata hai, customer se hi le lo. Bachchon ke liye parent ka Aadhaar.</li>
+    <li><b>Details confirm:</b> Naam ki spelling, gender, DOB aur relation — ration card se exactly match karo, correction baad me mushkil hoti hai.</li>
+    <li><b>Card download:</b> Ayushman card PDF turant generate hota hai — print karke customer ko do aur hospital admission me ye card hi dikhana hota hai.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Ration card me naam alag ho to pehle ration card correction karwao — Ayushman usi se verify hota hai.</li>
+      <li>Aadhaar mobile link nahi hai to pehle bank/Aadhaar center me linking karwao.</li>
+      <li>Customer ko empanelled hospital ki list bhi WhatsApp kar do — card ke fayde ki puri jaankari milegi.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>Vay Vandana 70+ (SarkariDNA guide):</b> 70 saal se bade HAR citizen ka card banta hai — income proof ya ration card nahi chahiye, sirf Aadhaar se age verify hoti hai. Ye alag Rs 5 lakh cover hai, PM-JAY list walo ke saath.</li>
+      <li><b>Pehle eligibility check:</b> portal par parivar ka naam na mile to card nahi banega — Arogya Mitra desk / state survey line batana hoga. Ration card correction pehle karwao.</li>
+      <li><b>OTP Aadhaar-linked mobile par:</b> e-KYC fail ho to sabse pehle mobile-Aadhaar link check karo (Rule 06).</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 12: E-SHRAM ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">12</span>
+      <div class="svc-titles">
+        <div class="svc-name">E-Shram Card</div>
+        <div class="svc-cat">Labour &middot; Ministry of Labour (UAN)</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 30</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    E-Shram card unorganized sector workers (kheti, majdoori, rickshaw, dukaan, ghar ka kaam
+    aadi) ka national database registration hai — 12-digit UAN number milta hai. Card ke saath
+    2 lakh ka Pradhan Mantri Suraksha Bima (accident insurance) free me juda hota hai aur
+    future schemes ka base bhi yahi hai. Card turant download hota hai.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun banwa sakta hai</span><span class="mv">16-59 saal ka unorganized worker (EPFO/ESIC me na ho); Aadhaar-linked mobile zaroori</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">15-30 minute (e-KYC ho jane par)</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 0 (free) + Service 30 + GST 0 = Rs 30</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">12.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Pura Naam</td><td>Aadhaar ke hisaab se</td></tr>
+      <tr><td>2</td><td>Date of Birth</td><td>16-59 saal me hona chahiye</td></tr>
+      <tr><td>3</td><td>Mobile Number</td><td>Aadhaar se linked (e-KYC isi par)</td></tr>
+      <tr><td>4</td><td>Aadhaar Number</td><td>12 digit (masked rakho)</td></tr>
+      <tr><td>5</td><td>Dhanda</td><td>Occupation list se (kheti, majdoori, etc.)</td></tr>
+      <tr><td>6</td><td>Pura Address</td><td>Local + permanent</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">12.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Aadhaar Card</span>
+    <span class="doc-chip">Bank Passbook</span>
+    <span class="doc-chip">Passport Photo</span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">register.eshram.gov.in</span>
+    <span class="pk">e-KYC</span><span class="pv">Aadhaar OTP - customer ke saath</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">12.3</span>Card banane ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Mobile-Aadhaar link check:</b> Pehla step yahi hai — link nahi hai to e-KYC fail hoga. Customer ko pehle Aadhaar center bhejo ya biometric se karwa lo.</li>
+    <li><b>Self-registration:</b> Portal par mobile + Aadhaar e-KYC (OTP customer ke saath) karo. Registered mobile par OTP aayega.</li>
+    <li><b>Personal details:</b> Naam, DOB, gender, social category, education, marital status — Aadhaar se auto-populate hote hain, cross-check karo.</li>
+    <li><b>Occupation + skills:</b> Occupation dropdown se exact kaam chuno (55 options hain), skill aur kaam ki nature (self-employed/regular/casual) batao.</li>
+    <li><b>Bank + address:</b> Account number, IFSC, pura address aur nominee details. Photo upload (ya Aadhaar se aati hai).</li>
+    <li><b>UAN download:</b> Card turant PDF me aa jata hai — print karke customer ko do aur UAN number WhatsApp par bhejo.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>EPFO/ESIC member workers eligible nahi hote — pehle poochho kahan kaam karta hai.</li>
+      <li>Bank account e-Shram me zaroori hai (PMSBY claim isi se hoga) — passbook ka pehla page clear photo.</li>
+      <li>Card par accident insurance ke baare me customer ko zaroor batayein — ye sabse bada fayda hai.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>Self-declaration portal hai:</b> 400+ occupations me se dhanda chunna hai — koi proof nahi mangte, par galat jaankari par future scheme benefits ruk sakte hain.</li>
+      <li><b>Update bhi karwao:</b> address, occupation ya mobile badla ho to e-Shram portal par update karwao — purane data par PMSBY claim atak jata hai.</li>
+      <li><b>Registration FREE hai:</b> portal par koi govt fee nahi — customer ko bata do ki Rs 30 sirf service charge hai (bade CSC centers bhi 30-50 hi lete hain).</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 13: GOVERNMENT JOB FORM ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">13</span>
+      <div class="svc-titles">
+        <div class="svc-name">Government Job Form</div>
+        <div class="svc-cat">Recruitment &middot; Service-Specific Portal (SSC/UPSC/Railway/Rajya)</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 118</div><div class="fee-label">Customer Pays (+ Exam Fee Alag)</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    SSC, Railway, UPSC, police, patwari aadi ke vacancy forms alag-alag portals par hote hain.
+    Aapka kaam: vacancy identify karna, eligibility match karna, form bharwana aur photo-signature
+    spec ke hisaab se upload karna. <b>Exam fee customer ke hi card/UPI se portal par jata hai</b> —
+    ye aapke service charge me shaamil nahi hai, isliye pehle hi bata do.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun apply kar sakta hai</span><span class="mv">Notification ki eligibility me fit candidate (age, education, category, domicile)</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">Same day (30-45 min); last-date wale din rush hota hai</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 0 + Service 100 + GST 18 = Rs 118 (exam fee alag)</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">13.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Pura Naam</td><td>10th certificate ke hisaab se</td></tr>
+      <tr><td>2</td><td>Date of Birth</td><td>Age limit isi se check hoti hai</td></tr>
+      <tr><td>3</td><td>Mobile Number</td><td>Registration ID isi par banta hai</td></tr>
+      <tr><td>4</td><td>Email</td><td>Admit card/updates yahi aate hain</td></tr>
+      <tr><td>5</td><td>Education</td><td>Qualification + board + year + marks</td></tr>
+      <tr><td>6</td><td>Category</td><td>General/OBC/SC/ST/EWS + sub-caste</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">13.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Passport Photo</span>
+    <span class="doc-chip">Signature</span>
+    <span class="doc-chip">Education Certificates</span>
+    <span class="doc-chip">Purana Caste Cert <span class="opt">(agar category claim ho)</span></span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">Vacancy ke hisaab se alag (ssc.gov.in, ssc-cr.org, etc.)</span>
+    <span class="pk">Exam Fee</span><span class="pv">Customer ke payment se portal par</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">13.3</span>Form bharne ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Notification padho:</b> Vacancy ka official notification PDF khulo — post, vacancies, age limit, education, fees aur important dates note karo. Customer se eligibility match karo.</li>
+    <li><b>Registration:</b> Portal par naya registration (agar pehle nahi bana) — mobile + email se OTP. Registration ID/Roll number customer ko WhatsApp karo.</li>
+    <li><b>Form details:</b> Personal, address, education (marks exact certificate se), category, preference posts. Jo bhar chuke purane forms hain unse data match karo.</li>
+    <li><b>Photo + signature spec:</b> Har exam ki apni size/ratio hoti hai (photo 20-50KB, signature 10-20KB aam hai) — spec ke bahar upload reject ho jata hai.</li>
+    <li><b>Exam fee:</b> Customer ke debit/UPI se portal par pay karwao, ya sath beth ke customer khud kare. Fee receipt save karo.</li>
+    <li><b>Final print:</b> Application ka final print/PDF customer ko bhejo + exam date aur city slip ki jankari do. Correction window ki date bhi note karo.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Photo/signature ki size-spec galat = application reject — pehle spec padho, phir resize karo.</li>
+      <li>Category certificate current financial year ka maango (OBC/EWS me dated hota hai).</li>
+      <li>Naam 10th certificate se EXACT lo — baaki certificates me bhi wahi order follow hota hai.</li>
+      <li>Last date pe ek din pehle submit karwao — last-day rush me payment portal atak jata hai.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>OBC/EWS certificate dated hote hain:</b> OBC non-creamy layer 1 saal ke andar ka, EWS current FY ka — purana certificate form me nahi chalega.</li>
+      <li><b>Photo spec aam hai:</b> white background, passport size, 20-50 KB; kai exams me naam + date photo par likhi honi chahiye — notification me likha hota hai.</li>
+      <li><b>Preview + final submit:</b> fee payment ke baad application PREVIEW dekh kar hi FINAL SUBMIT karo — partially submitted form reject maana jata hai.</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 14: SCHOLARSHIP ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">14</span>
+      <div class="svc-titles">
+        <div class="svc-name">Scholarship (NSP)</div>
+        <div class="svc-cat">Education &middot; National Scholarship Portal</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 30</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    National Scholarship Portal (NSP) par pre-matric (9-10), post-matric, merit-cum-means aur
+    minority schemes hote hain — paisa seedha student ke bank account me DBT se aata hai. Ab
+    OTR (One Time Registration) Aadhaar face-auth se hota hai. Application ke baad institute
+    verification, phir state/ministry level verification chalti hai.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun apply kar sakta hai</span><span class="mv">Recognize institute ka student; scheme ke hisaab se income limit + category + marks</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">Apply same day; disbursal Dec-March (verification ke baad)</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 0 (free) + Service 30 + GST 0 = Rs 30</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">14.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Student ka Naam</td><td>10th/Aadhaar ke hisaab se</td></tr>
+      <tr><td>2</td><td>Date of Birth</td><td>DD/MM/YYYY</td></tr>
+      <tr><td>3</td><td>Mobile Number</td><td>Aadhaar linked (OTP/face-auth ke liye)</td></tr>
+      <tr><td>4</td><td>Email</td><td>Updates ke liye</td></tr>
+      <tr><td>5</td><td>Institute ka Naam</td><td>NSP registered hona chahiye</td></tr>
+      <tr><td>6</td><td>Bank Account</td><td>Student ke naam par, DBT active</td></tr>
+      <tr><td>7</td><td>IFSC Code</td><td>Branch ka</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">14.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Aadhaar Card</span>
+    <span class="doc-chip">Marksheet</span>
+    <span class="doc-chip">Income Certificate</span>
+    <span class="doc-chip">Purana Caste Cert <span class="opt">(category scheme)</span></span>
+    <span class="doc-chip">Bank Passbook</span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">scholarships.gov.in</span>
+    <span class="pk">OTR</span><span class="pv">Aadhaar face-auth - customer ke saath</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">14.3</span>Application ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>OTR banao:</b> scholarships.gov.in par One Time Registration — Aadhaar face-auth/OTP customer ke mobile se. OTR number lifetime ke liye same rehta hai.</li>
+    <li><b>Scheme chuno:</b> Class, category, income aur state ke hisaab se eligible scheme list dekho (pre-matric, post-matric, minority, merit). Har scheme ki deadline alag hoti hai.</li>
+    <li><b>Academic details:</b> Institute ka NSP code, course, current year, pichle exam ke marks (minimum percentage scheme me hota hai).</li>
+    <li><b>Bank + documents:</b> Account number + IFSC (student ke naam), Aadhaar-bank link check karo. Income certificate (fresh), caste certificate, marksheet, hostel/day-scholar declaration upload karo.</li>
+    <li><b>Submit + institute verify:</b> Application institute (Nodal officer) ke paas verification ke liye jayegi — principal/clerk ko jaldi se sign karwao, yahi sabse dheema step hai.</li>
+    <li><b>State verification:</b> Uske baad district/state level verification hoti hai. Status har hafte check karo — defect aa jaye to 15 din me theek karwana hota hai.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Deadline miss = pura saal gaya — October-December wali window board par likh lo.</li>
+      <li>Aadhaar-bank link na ho to DBT fail hota hai — pehle hi check karwao.</li>
+      <li>Income certificate fresh (current FY) chahiye — purani file nahi chalegi.</li>
+      <li>Institute NSP me registered hi hona chahiye — pehle principal office se confirm karo.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>Admission proof + fee receipt bhi:</b> income/caste certificate ke saath admission proof aur fee receipt bhi upload hote hain — school/college se le lo.</li>
+      <li><b>Fresh vs Renewal:</b> pichle saal NSP lene wale ka RENEWAL (promotion certificate ke saath), naye students ka FRESH — dono ka portal path alag hai.</li>
+      <li><b>Account student ka khud ka:</b> DBT student ke apne Aadhaar-linked account me hi hoti hai — parents ke account me paisa nahi aata.</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 15: RATION CARD ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">15</span>
+      <div class="svc-titles">
+        <div class="svc-name">Ration Card</div>
+        <div class="svc-cat">Food &amp; Supply &middot; Smart PDS 2.0 / NFSA</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 104</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    Ration card sirf sasta ration hi nahi — ye parivar ki sabse basic identity hai jisse
+    Ayushman, scholarship, E-Shram sab linked hote hain. Naya card Smart PDS Portal 2.0 par
+    <b>Aadhaar + OTP se</b> ban jata hai: mukhiya ki details, family members add karna, bank
+    details aur FPS (ration dukaan) dealer chunna. Kuch regions me application print karke
+    local food inspector ko physical submit bhi karni padti hai.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun apply kar sakta hai</span><span class="mv">NFSA eligible parivar jiske paas pehle se ration card nahi hai; existing card me member add karne ka kaam alag flow hai</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">15-30 din (state-wise); acknowledgment number se status track</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 45 + Service 50 + GST 9 = Rs 104 (govt fee state-wise verify — kuch states me alag)</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">15.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Mukhiya ka Naam</td><td>Ghar ke head of family ka</td></tr>
+      <tr><td>2</td><td>Pita ka Naam</td><td>Mukhiya ke pita ka</td></tr>
+      <tr><td>3</td><td>Date of Birth</td><td>DD/MM/YYYY</td></tr>
+      <tr><td>4</td><td>Mobile Number</td><td>10 digit, Aadhaar-linked best</td></tr>
+      <tr><td>5</td><td>Pura Address</td><td>PIN code sahit</td></tr>
+      <tr><td>6</td><td>Dhanda (Occupation)</td><td>Kheti/dukaan/mazdoori aadi</td></tr>
+      <tr><td>7</td><td>Varshik Aay</td><td>Total family income, sirf number</td></tr>
+      <tr><td>8</td><td>Parivar Sadasya</td><td>Ghar me kitne members</td></tr>
+      <tr><td>9</td><td>Card Type</td><td>APL / BPL / ANTYODAYA / PATA_NAHI</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">15.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Aadhaar Card <span class="opt">(sabhi members)</span></span>
+    <span class="doc-chip">Passport Photo <span class="opt">(max 5MB)</span></span>
+    <span class="doc-chip">Address Proof <span class="opt">(bijli/paani bill, voter ID)</span></span>
+    <span class="doc-chip">Income Certificate <span class="opt">(optional)</span></span>
+    <span class="doc-chip">Caste Certificate <span class="opt">(optional)</span></span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">nfsa.gov.in / Smart PDS (state-wise)</span>
+    <span class="pk">Login</span><span class="pv">Aadhaar + OTP — customer ke saath</span>
+    <span class="pk">Extra</span><span class="pv">FPS dealer selection form me hota hai</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">15.3</span>Portal par banane ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Citizen Login:</b> Smart PDS portal par "Citizen Login" chuno — mukhiya ka Aadhaar number dalo, OTP unke linked mobile par aayega. Ye OTP customer ka hai.</li>
+    <li><b>RC Application:</b> "RC Application" me jaakar "Apply New Ration Card" select karo.</li>
+    <li><b>Mukhiya details:</b> Naam, photo (max 5MB), occupation, qualification aur income bharo — naam Aadhaar se exact match hona chahiye.</li>
+    <li><b>Members add karo:</b> Har family member ka Aadhaar number, relation aur occupation ek-ek karke add karo. Sabhi members ka Aadhaar WhatsApp par already mil chuka hoga.</li>
+    <li><b>Bank + FPS dealer:</b> Bank account details dalo aur Fair Price Shop (jahan se ration milega) ka dealer chuno — galat FPS chune to ration alag dukaan par jayega.</li>
+    <li><b>Review + submit:</b> Pura form ek baar review karke submit karo — <b>acknowledgment number</b> save karke customer ko bhejo. Yahi tracking number hai.</li>
+    <li><b>Physical submission (agar lage):</b> Kuch regions me application print karke local food inspector ko jama karni hoti hai — customer ko pehle bata do.</li>
+    <li><b>Status track:</b> Acknowledgment number se portal par status check karte raho; card banne ke baad customer ko bata do.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Pehle check karo ki parivar ke kisi member ka purana RC to nahi — duplicate application reject hoti hai.</li>
+      <li>Member add karne ka kaam "Add Member" flow se hota hai, naye card se alag — kaunsa kaam hai pehle confirm karo.</li>
+      <li>Income/caste certificate optional hain, par lagane se BPL/ANTYODAYA category milne ke chances badhte hain.</li>
+      <li>Aadhaar me ghar ka address purana ho to pehle address update karwao — RC usi par banega.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>Smart PDS 2.0 + Aadhaar OTP (SarkariDNA Ration video):</b> login ke liye Aadhaar + OTP hi process hai — koi password nahi. Isliye mukhiya ka Aadhaar-linked mobile sabse pehle confirm karo.</li>
+      <li><b>Photo max 5MB:</b> mukhiya ki passport-size photo 5MB se chhoti honi chahiye; income/caste certificate aur address proof PDF me upload hote hain.</li>
+      <li><b>FPS dealer selection zaroori:</b> form me hi ration dukaan (FPS) choose karni hoti hai — ye step skip hua to card bana par ration nahi milega.</li>
+      <li><b>Physical submission bhi ho sakti hai:</b> video ke hisaab se kuch regions me print karke food inspector ko dena padta hai — acknowledgment number ke saath rakho.</li>
+      <li><b>Pura video:</b> youtu.be/ZdpjzvyLfuQ — New Ration Card Apply 2026 (SarkariDNA)</li>
+    </ul>
+  </div>
+
+  <!-- ========== SERVICE 16: PASSPORT ========== -->
+  <div class="chapter-header">
+    <div class="svc-top">
+      <span class="svc-num">16</span>
+      <div class="svc-titles">
+        <div class="svc-name">Passport</div>
+        <div class="svc-cat">Identity &middot; Passport Seva (PSK)</div>
+      </div>
+      <div class="svc-fee"><div class="fee-amount">Rs 2618</div><div class="fee-label">Customer Pays</div></div>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    Passport visa travel ke liye sabse strong identity + citizenship proof hai. Application
+    Passport Seva portal par hoti hai — 9-step form, fee payment, phir <b>PSK (Passport Seva
+    Kendra) appointment</b> jahan original documents verify hote hain aur photo/signature live
+    capture hota hai. Uske baad police verification hoti hai. Form me hi ECR/Non-ECR aur
+    36/60 pages decide hota hai.
+  </p>
+
+  <div class="meta-row">
+    <div class="meta-chip"><span class="mk">Kaun apply kar sakta hai</span><span class="mv">Koi bhi Indian citizen; minor ke liye annexure + parents ke documents; renewal me purana passport</span></div>
+    <div class="meta-chip"><span class="mk">Processing time</span><span class="mv">Appointment ke baad 7-15 din (police verification sahit); tatkal 1-3 din</span></div>
+    <div class="meta-chip"><span class="mk">Fee breakdown</span><span class="mv">Govt 2500 + Service 100 + GST 18 = Rs 2618 (36 pages, 10 saal, normal; tatkal extra)</span></div>
+  </div>
+
+  <h3 class="sub"><span class="idx">16.1</span>WhatsApp par kaunse fields collect hote hain</h3>
+  <table>
+    <thead><tr><th style="width:34px">#</th><th>Field</th><th>Kya chahiye</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Pura Naam</td><td>Marksheet/Aadhaar se exact</td></tr>
+      <tr><td>2</td><td>Pita ka Naam</td><td>Family details me lagta hai</td></tr>
+      <tr><td>3</td><td>Date of Birth</td><td>DOB proof se match</td></tr>
+      <tr><td>4</td><td>Mobile Number</td><td>10 digit — OTP isi par</td></tr>
+      <tr><td>5</td><td>Email</td><td>Passport Seva login isi par banta hai</td></tr>
+      <tr><td>6</td><td>Pura Address</td><td>Police verification isi par hogi</td></tr>
+      <tr><td>7</td><td>Education (ECR)</td><td>10TH_PASS / BELOW_10TH — ECR isse tay</td></tr>
+      <tr><td>8</td><td>Apply Type</td><td>NEW / RENEWAL / TATKAAL</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">16.2</span>Kaunse documents lagenge</h3>
+  <div class="doc-chips">
+    <span class="doc-chip">Aadhaar Card</span>
+    <span class="doc-chip">DOB Proof <span class="opt">(birth cert / 10th marksheet)</span></span>
+    <span class="doc-chip">Address Proof <span class="opt">(bijli bill / passbook)</span></span>
+    <span class="doc-chip">Purana Passport <span class="opt">(renewal me, optional)</span></span>
+  </div>
+
+  <div class="portal-box">
+    <span class="pk">Portal</span>
+    <span class="pv">passportindia.gov.in</span>
+    <span class="pk">Appointment</span><span class="pv">PSK slot — operator book karega</span>
+    <span class="pk">Photo</span><span class="pv">PSK par live capture hota hai</span>
+  </div>
+
+  <h3 class="sub"><span class="idx">16.3</span>Portal par banane ka process (Operator SOP)</h3>
+  <ol class="steps">
+    <li><b>Registration:</b> passportindia.gov.in par "New User Registration" — customer ki email ID login banti hai, isliye email access confirm karo. Password customer ka hoga.</li>
+    <li><b>Apply type chuno:</b> Fresh/Re-issue me se, 36 ya 60 pages, Normal ya Tatkal. Pehli baar = Fresh, 36 pages kaafi hai.</li>
+    <li><b>9-step form:</b> Personal details, family details, address (current + permanent), emergency contact, previous passport (agar hai) — ek-ek step bharo.</li>
+    <li><b>ECR/Non-ECR:</b> 10th pass hai to Non-ECR eligible — BELOW_10TH wale ECR me aate hain jinka process thoda alag hota hai.</li>
+    <li><b>Fee payment:</b> Rs 2500 online pay karo (video: fee pehle Rs 1500 thi, ab Rs 2500 ho gayi). Tatkal me extra Rs 2000 lagta hai.</li>
+    <li><b>PSK appointment:</b> Slot book karo — jaldi book hota hai, appointment slip print/WhatsApp par rakho. Appointment par original documents + ek photocopy set le jana zaroori.</li>
+    <li><b>PSK visit:</b> Photo aur signature wahan live capture hote hain — WhatsApp wali photo yahan nahi lagegi. Customer ko original documents wahi dena hota hai.</li>
+    <li><b>Police verification:</b> Ghar par police aayegi — address proof ready rakho. Uske baad passport post se aata hai; tracking number se status dekho.</li>
+  </ol>
+
+  <div class="tips">
+    <div class="tt">Operator Tips — Rejection se bachav</div>
+    <ul>
+      <li>Email login hi sab kuch hai — customer ka email access na ho to pura process atak jayega, pehle confirm karo.</li>
+      <li>Appointment ke din late pahunche to slot cancel ho jata hai — customer ko samay pehle pahunchne ko kaho.</li>
+      <li>Naam marksheet/Aadhaar me EXACT same ho — shaadi ke baad surname badla ho to marriage certificate lagta hai.</li>
+      <li>Police verification me ghar par na mile to verification "not found" ho jati hai — customer ko date pehle bata do.</li>
+    </ul>
+  </div>
+
+  <div class="know">
+    <div class="kt">Sahi Tarike — Asli Process Facts</div>
+    <ul>
+      <li><b>Fee badh gayi — Rs 2500 (SarkariDNA Passport video):</b> pehle Rs 1500 thi, ab normal 36-pages/10-saal passport ki fee Rs 2500 hai. System pricing isi hisaab se set hai.</li>
+      <li><b>ECR vs Non-ECR:</b> 10th pass = Non-ECR (bina ECR check ke kisi bhi desh me travel); 10th fail = ECR category — kuch deshon me additional approval lagta hai.</li>
+      <li><b>Photo PSK par hi:</b> online application me photo upload nahi hota — Passport Seva Kendra par live photo + signature capture hota hai. Isliye system WhatsApp par photo nahi maangta.</li>
+      <li><b>DOB proof alag se:</b> Aadhaar ke saath DOB ka proof (birth certificate, 10th marksheet, voter ID) bhi laga do — birth certificate sabse strong hai.</li>
+      <li><b>Pura video:</b> youtu.be/9FaahA_lGnY — Passport Apply Online 2026 (SarkariDNA)</li>
+    </ul>
+  </div>
+
+  <!-- ========== QUICK REFERENCE ========== -->
+  <div class="chapter-header">
+    <div class="section-tag">Quick Reference</div>
+    <div class="section-title">Saari 16 Services Ek Nazar Me</div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text">
+    Neeche saari services ki fees, processing time aur portal type ka ek-look reference hai.
+    Government fees go-live se pehle ek baar verify kar lena (Rule 05). Exam fee aur kuch
+    portal fees customer ke direct payment me aati hain — unhe service charge me milana mat.
+  </p>
+
+  <table class="qref">
+    <thead>
+      <tr><th>#</th><th>Service</th><th style="width:86px">Fee</th><th style="width:120px">Time</th><th>Portal</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>01</td><td>PAN Card</td><td>Rs 166</td><td>5-15 din</td><td>NSDL/Protean</td></tr>
+      <tr><td>02</td><td>ITR Filing</td><td>Rs 590</td><td>Same day + e-verify</td><td>incometax.gov.in</td></tr>
+      <tr><td>03</td><td>GST Registration</td><td>Rs 590</td><td>7 working days</td><td>gst.gov.in</td></tr>
+      <tr><td>04</td><td>GST Return</td><td>Rs 354</td><td>Same day</td><td>gst.gov.in</td></tr>
+      <tr><td>05</td><td>Income Certificate</td><td>Rs 74</td><td>7-15 din</td><td>State e-District</td></tr>
+      <tr><td>06</td><td>Caste Certificate</td><td>Rs 74</td><td>15-30 din</td><td>State e-District</td></tr>
+      <tr><td>07</td><td>Domicile (Mool Niwas)</td><td>Rs 74</td><td>7-15 din (video: ~1 hafta)</td><td>State e-District</td></tr>
+      <tr><td>08</td><td>Birth Certificate</td><td>Rs 79</td><td>7-15 din</td><td>CRSORGI/Municipal</td></tr>
+      <tr><td>09</td><td>Death Certificate</td><td>Rs 79</td><td>7-15 din</td><td>CRSORGI/Municipal</td></tr>
+      <tr><td>10</td><td>Voter ID</td><td>Rs 59</td><td>30-45 din</td><td>voters.eci.gov.in</td></tr>
+      <tr><td>11</td><td>Ayushman Card</td><td>Rs 30</td><td>Same day - 3 din</td><td>beneficiary.nha.gov.in</td></tr>
+      <tr><td>12</td><td>E-Shram Card</td><td>Rs 30</td><td>15-30 min</td><td>register.eshram.gov.in</td></tr>
+      <tr><td>13</td><td>Gov Job Form</td><td>Rs 118</td><td>Same day</td><td>Vacancy-wise</td></tr>
+      <tr><td>14</td><td>Scholarship (NSP)</td><td>Rs 30</td><td>Apply same day</td><td>scholarships.gov.in</td></tr>
+      <tr><td>15</td><td>Ration Card</td><td>Rs 104</td><td>15-30 din</td><td>nfsa.gov.in / Smart PDS</td></tr>
+      <tr><td>16</td><td>Passport</td><td>Rs 2618</td><td>7-15 din + police</td><td>passportindia.gov.in</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub"><span class="idx">+</span>Video Guide References — SarkariDNA walkthroughs</h3>
+  <table>
+    <thead><tr><th>Service</th><th>Video Guide</th><th style="width:190px">Link</th></tr></thead>
+    <tbody>
+      <tr><td>PAN Card (new, 2026 rules)</td><td>New PAN Card Apply Online — Protean portal, DOB proof rule, e-KYC/e-Sign</td><td>youtu.be/c64iYxZsIPs</td></tr>
+      <tr><td>Income Certificate (Aay Praman)</td><td>Aay Praman Patra — e-District registration se certificate download tak</td><td>youtu.be/x03LgcZUiGQ</td></tr>
+      <tr><td>Caste Certificate (Jati Praman)</td><td>Jati Praman Patra — e-Saathi, Aadhaar auth, Rs 15 fee, Nistarit Avedan</td><td>youtu.be/0YPnxPPtRV4</td></tr>
+      <tr><td>Domicile (Niwas Praman)</td><td>Niwas Praman Patra 2026 — Aadhaar KYC, PDF password tip, ~1 hafta</td><td>youtu.be/n8jCAgHlqEs</td></tr>
+      <tr><td>Ration Card</td><td>New Ration Card 2026 — Smart PDS 2.0, Aadhaar OTP, members add, FPS</td><td>youtu.be/ZdpjzvyLfuQ</td></tr>
+      <tr><td>GST Registration</td><td>GST Registration 2026 — TRN, documents, Rule 14A Aadhaar auth</td><td>youtu.be/-m-bepELXHw</td></tr>
+      <tr><td>GST Return Filing</td><td>GSTR-1 / GSTR-1A / GSTR-3B practical training — RCM, ITC, Rule 86B</td><td>youtu.be/DZZYME0bRto</td></tr>
+      <tr><td>ITR Filing</td><td>Complete ITR Filing AY 2026-27 — ITR-1/2/4, regime, 26AS/AIS</td><td>youtu.be/RwsPEBP1wfs</td></tr>
+      <tr><td>Passport</td><td>Passport Apply Online 2026 — Rs 2500 fee, 9-step form, PSK, ECR/Non-ECR</td><td>youtu.be/9FaahA_lGnY</td></tr>
+    </tbody>
+  </table>
+
+  <p class="body-text">
+    <b>Knowledge sources:</b> Ye guide CSC Smart Seva system ke live Data Tables (fields, documents,
+    pricing) se bani hai, aur process knowledge <b>SarkariDNA YouTube channel</b>
+    (youtube.com/@SarkariDNA) ke 9 step-by-step video walkthroughs (upar wali table) aur official
+    portals — onlineservices.nsdl.com, incometax.gov.in, gst.gov.in, nfsa.gov.in,
+    passportindia.gov.in, voters.eci.gov.in, beneficiary.nha.gov.in, register.eshram.gov.in,
+    scholarships.gov.in, crsorgi.gov.in — se cross-verify ki gayi hai. Kisi bhi rule me shak
+    ho to usi portal ki latest notification sach maano.
+  </p>
+
+</div><!-- /main-content -->
+
+<!-- ================= ENDING ================= -->
+<div class="ending">
+  <div class="deco-ring ring-a"></div>
+  <div class="big-text">
+    Har service,<br><span class="thin">ek hi system se.</span>
+  </div>
+  <div class="sub-line">
+    Ye guide CSC Smart Seva ke saare workflows aur aapke manual portal kaam ka single
+    reference hai. Fees, rules aur portals time ke saath badalte hain — har mahine ek
+    baar official portals se verify karte raho.
+  </div>
+  <div class="cmd-card">
+    <div class="cmd-title">Roz ke commands - ek nazar me</div>
+    <div class="cmd-row"><span class="cmd-key">QUEUE</span><span class="cmd-desc">pending applications dekho</span></div>
+    <div class="cmd-row"><span class="cmd-key">DONE</span><span class="cmd-desc">portal par submit ho gaya</span></div>
+    <div class="cmd-row"><span class="cmd-key">ISSUE</span><span class="cmd-desc">problem report karo</span></div>
+    <div class="cmd-row"><span class="cmd-key">STATUS</span><span class="cmd-desc">application ka status</span></div>
+    <div class="cmd-row"><span class="cmd-key">HUMAN</span><span class="cmd-desc">bot pause, manual help</span></div>
+  </div>
+  <div class="edition">
+    <span>CSC Smart Seva</span>
+    <span>Operator Guide V3.0 - 2026</span>
+  </div>
+</div>
+
+</body>
+</html>

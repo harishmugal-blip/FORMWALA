@@ -1,0 +1,163 @@
+{
+ "id": "3c5c0002-0000-4000-8000-000000000004",
+ "name": "CSC 04 - Customer Profile Engine",
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "active": false,
+ "pinData": {},
+ "nodes": [
+  {
+   "id": "d-t",
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1,
+   "position": [
+    240,
+    300
+   ],
+   "parameters": {}
+  },
+  {
+   "id": "d-lookup",
+   "name": "Lookup Customer",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    460,
+    300
+   ],
+   "alwaysOutputData": true,
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "customers"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "phone",
+       "condition": "eq",
+       "keyValue": "={{ $('Trigger').first().json.phone }}"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   }
+  },
+  {
+   "id": "d-if",
+   "name": "Customer Exists?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    680,
+    300
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c-exists",
+       "leftValue": "={{ $json.phone }}",
+       "rightValue": "",
+       "operator": {
+        "type": "string",
+        "operation": "isEmpty",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "d-insert",
+   "name": "Create Customer",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    900,
+    400
+   ],
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "customers"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Trigger').first().json.phone }}",
+      "full_name": "={{ $('Trigger').first().json.name || 'Customer' }}",
+      "email": "",
+      "state": "",
+      "district": "",
+      "address": "",
+      "consent_status": "={{ $('Trigger').first().json.consent_given ? 'GRANTED' : 'PENDING' }}",
+      "created_at": "={{ $now.toISO() }}",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   }
+  },
+  {
+   "id": "d-res",
+   "name": "Profile Result",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1120,
+    300
+   ],
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const t = $('Trigger').first().json;\nconst exists = $json.phone ? true : false;\nconst customer = exists ? $json : { phone: t.phone, full_name: t.name || 'Customer' };\nconst isNew = !exists;\nconst msg = isNew ? `Aapka profile ban gaya hai! 🙏` : `Welcome back, ${customer.full_name}! 🙏`;\nreturn [{ json: { customer, is_new: isNew, profile_msg: msg } }];"
+   }
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Lookup Customer",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Lookup Customer": {
+   "main": [
+    [
+     {
+      "node": "Customer Exists?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ }
+}

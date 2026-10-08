@@ -1,0 +1,362 @@
+{
+ "id": "3c5c0909-0000-4000-8000-000000000009",
+ "name": "CSC 09 - OCR Extractor (AI Vision)",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=WHATSAPP_ACCESS_TOKEN"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get WA Token",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst cfg = $('Get WA Token').first().json || {};\nconst token = cfg.config_value || '';\nconst input = $json;\nconst valid = token && token !== 'SET_YOUR_WABA_TOKEN';\nreturn [{ json: { valid, token, media_id: input.media_id, mime_type: input.mime_type || 'image/jpeg', application_id: input.application_id, doc_key: input.doc_key } }];"
+   },
+   "name": "Check Token",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-TokenOK",
+       "leftValue": "={{ $json.valid }}",
+       "rightValue": "true",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Token OK?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst j = $json;\nreturn [{ json: { ocr_text: '', note: 'OCR skipped - WhatsApp token configured nahi hai. Operator manually verify karega.', doc_key: j.doc_key } }];"
+   },
+   "name": "OCR Skipped",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=WHATSAPP_API_VERSION"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get API Version",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "url": "=https://graph.facebook.com/={{ $('Get API Version').first().json.config_value || 'v21.0' }}/{{ $('Check Token').first().json.media_id }}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{ $('Check Token').first().json.token }}"
+      }
+     ]
+    },
+    "options": {
+     "response": {
+      "response": {
+       "neverError": true
+      }
+     }
+    }
+   },
+   "name": "Get Media URL",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    0,
+    0
+   ],
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "url": "={{ $json.url || '' }}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{ $('Check Token').first().json.token }}"
+      }
+     ]
+    },
+    "options": {
+     "response": {
+      "response": {
+       "responseFormat": "file",
+       "neverError": true
+      }
+     }
+    }
+   },
+   "name": "Download Media",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    0,
+    0
+   ],
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst t = $('Check Token').first().json;\nconst hasBinary = !!(($binary && $binary.data) || ($input.item?.binary && $input.item.binary.data));\nif (!hasBinary) return [{ json: { skip: true, doc_key: t.doc_key, note: 'Media download fail - OCR skipped', ocr_text: '' } }];\nreturn [{ json: { skip: false, doc_key: t.doc_key, prompt: 'Ye Indian government document ka photo hai (' + t.doc_key + '). Isme se saari text details nikaal kar simple text mein likho. Sirf text do, koi explanation nahi.' } }];"
+   },
+   "name": "Build Vision Prompt",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "openRouterApi",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ model: 'meta-llama/llama-3.2-11b-vision-instruct:free', max_tokens: 600, messages: [ { role: 'user', content: [ { type: 'text', text: $json.prompt }, { type: 'image_url', image_url: { url: 'data:{{ $('Check Token').first().json.mime_type }};base64,' + ($binary ? $binary.data.toString('base64') : '') } } ] } ] }) }}",
+    "options": {
+     "response": {
+      "response": {
+       "neverError": true
+      }
+     },
+     "timeout": 60000
+    }
+   },
+   "name": "OpenRouter Vision OCR",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    0,
+    0
+   ],
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $json;\nlet text = '';\ntry { text = r.choices && r.choices[0] && r.choices[0].message && r.choices[0].message.content || ''; } catch (e) {}\nconst skip = $('Build Vision Prompt').first().json.skip;\nreturn [{ json: { ocr_text: String(text).slice(0, 4000), note: skip ? 'skipped' : (text ? 'ok' : 'ocr-failed'), doc_key: $('Check Token').first().json.doc_key } }];"
+   },
+   "name": "Parse OCR",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Get WA Token",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get WA Token": {
+   "main": [
+    [
+     {
+      "node": "Check Token",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Check Token": {
+   "main": [
+    [
+     {
+      "node": "Token OK?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Token OK?": {
+   "main": [
+    [
+     {
+      "node": "Get API Version",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "OCR Skipped",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get API Version": {
+   "main": [
+    [
+     {
+      "node": "Get Media URL",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Media URL": {
+   "main": [
+    [
+     {
+      "node": "Download Media",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Download Media": {
+   "main": [
+    [
+     {
+      "node": "Build Vision Prompt",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Build Vision Prompt": {
+   "main": [
+    [
+     {
+      "node": "OpenRouter Vision OCR",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "OpenRouter Vision OCR": {
+   "main": [
+    [
+     {
+      "node": "Parse OCR",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

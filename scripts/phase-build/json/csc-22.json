@@ -1,0 +1,587 @@
+{
+ "id": "3c5c2222-0000-4000-8000-000000000022",
+ "name": "CSC 22 - Human Handoff (Bot Pause/Resume)",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst j = $json;\nreturn [{ json: { mode: j.mode || 'takeover', phone: j.phone, name: j.name || 'Customer', message: j.message || '' } }];"
+   },
+   "name": "Route Mode",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "rules": {
+     "values": [
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "m0",
+          "leftValue": "={{ $json.mode }}",
+          "rightValue": "takeover",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "takeover"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "m1",
+          "leftValue": "={{ $json.mode }}",
+          "rightValue": "customer_message",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "fwd"
+      }
+     ]
+    },
+    "options": {
+     "fallbackOutput": "extra",
+     "renameFallbackOutput": "resume"
+    }
+   },
+   "name": "Route Mode?",
+   "type": "n8n-nodes-base.switch",
+   "typeVersion": 3.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "upsert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "conversation_state"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "phone",
+       "condition": "eq",
+       "keyValue": "={{ $('Route Mode').first().json.phone }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Mode').first().json.phone }}",
+      "handoff_active": "TRUE",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Set Handoff State",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "handoff_queue"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Mode').first().json.phone }}",
+      "name": "={{ $('Route Mode').first().json.name }}",
+      "reason": "={{ $('Route Mode').first().json.message.slice(0, 200) }}",
+      "status": "WAITING",
+      "taken_by": "",
+      "created_at": "={{ $now.toISO() }}",
+      "resolved_at": ""
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Queue Handoff",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=ADMIN_WHATSAPP_NUMBER"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Admin2",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "action": "send_whatsapp",
+      "phone": "={{ $json.config_value || '' }}",
+      "message": "=🚨 *HUMAN HANDOFF REQUEST*\n\nCustomer: {{ $('Route Mode').first().json.name }} ({{ $('Route Mode').first().json.phone }})\nMessage: {{ $('Route Mode').first().json.message.slice(0, 300) }}\n\nBot is PAUSED for this customer. Aap khud WhatsApp par reply kar sakte hain.\nBot resume karne ke liye: RESUME {{ $('Route Mode').first().json.phone }}",
+      "template": "HANDOFF_ALERT",
+      "related_id": "={{ $('Route Mode').first().json.phone }}"
+     }
+    }
+   },
+   "name": "Alert Operator",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const p = $('Route Mode').first().json;\nreturn [{ json: { reply: '\\ud83d\\udc64\\u200d\\ud83d\\udcbc Aapki chat CSC operator ko transfer kar di gayi hai.\\nBot abhi PAUSE hai - operator khud aapse baat karega.\\nKripya thodi der pratiyeksha karein.\\u00a0\\ud83d\\ude4f', phone: p.phone } }];"
+   },
+   "name": "Takeover Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=ADMIN_WHATSAPP_NUMBER"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Admin3",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "action": "send_whatsapp",
+      "phone": "={{ $json.config_value || '' }}",
+      "message": "=📨 *Customer message (handoff mode)*\n\n{{ $('Route Mode').first().json.name }} ({{ $('Route Mode').first().json.phone }}):\n{{ $('Route Mode').first().json.message.slice(0, 500) }}",
+      "template": "HANDOFF_FORWARD",
+      "related_id": "={{ $('Route Mode').first().json.phone }}"
+     }
+    }
+   },
+   "name": "Forward To Operator",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const p = $('Route Mode').first().json;\nreturn [{ json: { reply: '\\ud83d\\udce4 Aapka message operator ko forward kar diya gaya hai. Wo jaldi reply karenge.', phone: p.phone } }];"
+   },
+   "name": "Fwd Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "upsert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "conversation_state"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "phone",
+       "condition": "eq",
+       "keyValue": "={{ $('Route Mode').first().json.phone }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Mode').first().json.phone }}",
+      "handoff_active": "FALSE",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Clear Handoff State",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "handoff_queue"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "phone",
+       "condition": "eq",
+       "keyValue": "={{ $('Route Mode').first().json.phone }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "status": "RESOLVED",
+      "resolved_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Resolve Queue",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nreturn [{ json: { ok: true, phone: $('Route Mode').first().json.phone, handoff: false } }];"
+   },
+   "name": "Resume Output",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const admin = $json;\nconst p = $('Route Mode').first().json;\nreturn [{ json: { phone: admin.config_value || '', message: '\\ud83d\\udea8 HUMAN HANDOFF REQUEST\\nCustomer: ' + p.name + ' (' + p.phone + ')\\nMessage: ' + String(p.message || '').slice(0, 300) + '\\nBot PAUSED hai. Resume karne ke liye: RESUME ' + p.phone, template: 'HANDOFF_ALERT', related_id: p.phone } }];"
+   },
+   "name": "Prep Alert Operator",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -120,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const admin = $json;\nconst p = $('Route Mode').first().json;\nreturn [{ json: { phone: admin.config_value || '', message: '\\ud83d\\udce8 Customer message (handoff mode)\\n' + p.name + ' (' + p.phone + '):\\n' + String(p.message || '').slice(0, 500), template: 'HANDOFF_FORWARD', related_id: p.phone } }];"
+   },
+   "name": "Prep Forward To Operator",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -120,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Route Mode",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Route Mode": {
+   "main": [
+    [
+     {
+      "node": "Route Mode?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Route Mode?": {
+   "main": [
+    [
+     {
+      "node": "Set Handoff State",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Get Admin3",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Clear Handoff State",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Set Handoff State": {
+   "main": [
+    [
+     {
+      "node": "Queue Handoff",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Queue Handoff": {
+   "main": [
+    [
+     {
+      "node": "Get Admin2",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Admin2": {
+   "main": [
+    [
+     {
+      "node": "Prep Alert Operator",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Alert Operator": {
+   "main": [
+    [
+     {
+      "node": "Takeover Reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Admin3": {
+   "main": [
+    [
+     {
+      "node": "Prep Forward To Operator",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Forward To Operator": {
+   "main": [
+    [
+     {
+      "node": "Fwd Reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Clear Handoff State": {
+   "main": [
+    [
+     {
+      "node": "Resolve Queue",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Resolve Queue": {
+   "main": [
+    [
+     {
+      "node": "Resume Output",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep Alert Operator": {
+   "main": [
+    [
+     {
+      "node": "Alert Operator",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep Forward To Operator": {
+   "main": [
+    [
+     {
+      "node": "Forward To Operator",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

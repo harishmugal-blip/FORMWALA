@@ -1,0 +1,816 @@
+     1→import { db } from "@/lib/db";
+     2→import {
+     3→  getServices,
+     4→  getFields,
+     5→  getDocs,
+     6→  getConfigMap,
+     7→  type Svc,
+     8→  type FieldRow,
+     9→  type DocRow,
+    10→} from "@/lib/csc-catalog";
+    11→import {
+    12→  validateField,
+    13→  matchChoice,
+    14→  aiFieldGate,
+    15→  aiGeneralChat,
+    16→  isSkip,
+    17→  isCancel,
+    18→  isConfirm,
+    19→  isMenu,
+    20→  isPaid,
+    21→} from "@/lib/webchat-validators";
+    22→import { upsertCustomerN8n, insertApplicationN8n } from "@/lib/csc-write";
+    23→
+    24→// ============================================================
+    25→// CSC Smart Seva — WEB chatbot engine (Ravi persona)
+    26→// Flow: ID_NAME → ID_PHONE (customer ID banti he) → MENU → OFFER
+    27→//       → FIELDS → DOCS → PAYMENT → DONE
+    28→// Same questions/docs/prices as the WhatsApp bot (service_fields,
+    29→// service_documents, service_pricing tables).
+    30→// ============================================================
+    31→
+    32→export type Attachment = {
+    33→  name: string;
+    34→  type: string;
+    35→  size: number;
+    36→  dataUrl: string;
+    37→};
+    38→
+    39→export type BotReply = {
+    40→  text: string;
+    41→  chips?: string[];
+    42→  cards?: Svc[];
+    43→  expectFile?: boolean;
+    44→};
+    45→
+    46→export type WebState = {
+    47→  serviceId?: string;
+    48→  serviceName?: string;
+    49→  fields?: FieldRow[];
+    50→  fidx?: number;
+    51→  collected?: Record<string, string>;
+    52→  docs?: DocRow[];
+    53→  didx?: number;
+    54→  docsCollected?: Record<string, { name: string; type: string; size: number }>;
+    55→  fails?: number;
+    56→};
+    57→
+    58→export type EngineSession = {
+    59→  sessionId: string;
+    60→  stage: string;
+    61→  customerId: string;
+    62→  name: string;
+    63→  phone: string;
+    64→  state: WebState;
+    65→};
+    66→
+    67→export type EngineInput = {
+    68→  text?: string;
+    69→  attachment?: Attachment;
+    70→};
+    71→
+    72→export type EngineResult = {
+    73→  replies: BotReply[];
+    74→  patch: Partial<Pick<EngineSession, "stage" | "customerId" | "name" | "phone" | "state">>;
+    75→};
+    76→
+    77→const STAGE = {
+    78→  NAME: "ID_NAME",
+    79→  PHONE: "ID_PHONE",
+    80→  MENU: "MENU",
+    81→  OFFER: "OFFER",
+    82→  FIELDS: "FIELDS",
+    83→  DOCS: "DOCS",
+    84→  PAYMENT: "PAYMENT",
+    85→  DONE: "DONE",
+    86→} as const;
+    87→
+    88→const APP_ID_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
+    89→const rand = (n: number, chars = APP_ID_CHARS) =>
+    90→  Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    91→
+    92→const appNumber = (prefix: string) => `${prefix}${rand(6)}`;
+    93→const appId = () => "APPWEB" + rand(10);
+    94→const hashId = (s: string) => {
+    95→  let h = 0;
+    96→  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    97→  return h;
+    98→};
+    99→
+   100→const acks = [
+   101→  "Samajh gaya ✅",
+   102→  "Theek he, note kar liya 👍",
+   103→  "Ho gaya ✅",
+   104→  "Perfect! ✓",
+   105→  "Likh liya 📝",
+   106→];
+   107→const ack = () => acks[Math.floor(Math.random() * acks.length)];
+   108→
+   109→function feeLines(svc: Svc): string {
+   110→  const gst = Math.round((svc.total_fee - svc.government_fee - svc.service_charge) * 100) / 100;
+   111→  return [
+   112→    `• Sarkari fee: ₹${svc.government_fee}`,
+   113→    `• Seva charge: ₹${svc.service_charge}`,
+   114→    `• GST (${svc.gst_percent}%): ₹${gst}`,
+   115→    `*Total: ₹${svc.total_fee}*`,
+   116→  ].join("\n");
+   117→}
+   118→
+   119→function normalize(s: string) {
+   120→  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+   121→}
+   122→
+   123→function findService(text: string, services: Svc[]): Svc | null {
+   124→  const t = normalize(text);
+   125→  if (!t) return null;
+   126→  // exact-ish match first
+   127→  for (const s of services) {
+   128→    if (normalize(s.service_name) === t || normalize(s.service_id) === t) return s;
+   129→  }
+   130→  // substring match
+   131→  for (const s of services) {
+   132→    const n = normalize(s.service_name);
+   133→    if (n.length >= 4 && (t.includes(n) || n.includes(t))) return s;
+   134→  }
+   135→  // category match ("pan card ka kaam", "income certificate lagana he")
+   136→  for (const s of services) {
+   137→    const words = normalize(s.service_name).split(/(?=[A-Z])/);
+   138→    if (words.length && words[0].length >= 4 && t.includes(words[0])) return s;
+   139→  }
+   140→  return null;
+   141→}
+   142→
+   143→async function menuReply(): Promise<BotReply> {
+   144→  const services = (await getServices()).filter((s) => s.service_id);
+   145→  return {
+   146→    text: "Ye sevaayein hum banate hein — jis par card dabayein ya uska naam likhein:",
+   147→    cards: services,
+   148→  };
+   149→}
+   150→
+   151→async function startService(state: WebState, svc: Svc): Promise<BotReply[]> {
+   152→  const [fields, docs] = await Promise.all([getFields(svc.service_id), getDocs(svc.service_id)]);
+   153→  state.serviceId = svc.service_id;
+   154→  state.serviceName = svc.service_name;
+   155→  state.fields = fields;
+   156→  state.fidx = 0;
+   157→  state.collected = {};
+   158→  state.docs = docs;
+   159→  state.didx = 0;
+   160→  state.docsCollected = {};
+   161→  state.fails = 0;
+   162→
+   163→  const steps = svc.processing_steps.length
+   164→    ? `\n\n⏱ Process: ${svc.processing_steps.join(" → ")}`
+   165→    : "";
+   166→  const head: BotReply = {
+   167→    text:
+   168→      `*${svc.service_name}* — ₹${svc.total_fee}\n\n` +
+   169→      `${svc.description}\n\n${feeLines(svc)}${steps}\n\n` +
+   170→      `Aage badhun? (2-4 din me kaam complete hota he)`,
+   171→    chips: ["✅ Confirm karo", "📋 Menu wapas"],
+   172→  };
+   173→  return [head];
+   174→}
+   175→
+   176→async function askCurrentField(state: WebState): Promise<BotReply | null> {
+   177→  const fields = state.fields ?? [];
+   178→  const i = state.fidx ?? 0;
+   179→  if (i >= fields.length) return null;
+   180→  const f = fields[i];
+   181→  const chips: string[] = [];
+   182→  if (!f.required) chips.push("SKIP");
+   183→  if (f.field_type === "CHOICE" && f.options.length) {
+   184→    return {
+   185→      text: `${f.question}\n\n${f.options.map((o, k) => `${k + 1}. ${o}`).join("\n")}`,
+   186→      chips: [...f.options.slice(0, 4), ...chips],
+   187→    };
+   188→  }
+   189→  return { text: f.question, chips };
+   190→}
+   191→
+   192→async function askCurrentDoc(state: WebState): Promise<BotReply | null> {
+   193→  const docs = state.docs ?? [];
+   194→  const i = state.didx ?? 0;
+   195→  if (i >= docs.length) return null;
+   196→  const d = docs[i];
+   197→  const chips: string[] = [];
+   198→  if (!d.required) chips.push("SKIP");
+   199→  return {
+   200→    text: `📄 *${d.label}* — ${d.question}`,
+   201→    chips,
+   202→    expectFile: true,
+   203→  };
+   204→}
+   205→
+   206→async function beginPayment(svc: Svc): Promise<BotReply> {
+   207→  const config = await getConfigMap();
+   208→  const upi = config.PAYMENT_UPI_ID || "cscseva@upi";
+   209→  return {
+   210→    text:
+   211→      `💳 *Payment*\n\n${feeLines(svc)}\n\n` +
+   212→      `UPI ID: *${upi}*\n` +
+   213→      `(GPay / PhonePe / Paytm — kisi se bhi kar sakte hein)\n\n` +
+   214→      `Payment karke *\"Paid\"* likhein. Verification operator karega aur receipt milega.`,
+   215→    chips: ["✅ Paid ho gaya", "❓ Payment me doubt"],
+   216→  };
+   217→}
+   218→
+   219→async function finalize(session: EngineSession): Promise<BotReply[]> {
+   220→  const state = session.state;
+   221→  const svc = (await getServices()).find((s) => s.service_id === state.serviceId);
+   222→  const config = await getConfigMap();
+   223→  const prefix = config.APP_NUMBER_PREFIX || "CSC-2026-";
+   224→  const number = appNumber(prefix);
+   225→  const aid = appId();
+   226→  const collected = state.collected ?? {};
+   227→  const docsCollected = state.docsCollected ?? {};
+   228→  const docs = Object.entries(docsCollected).map(([docKey, d]) => ({
+   229→    doc_key: docKey,
+   230→    mime_type: d.type,
+   231→    file_name: d.name,
+   232→  }));
+   233→
+   234→  const formData: Record<string, string> = { ...collected };
+   235→  for (const [k, v] of Object.entries(docsCollected)) formData[`doc_${k}`] = v.name;
+   236→
+   237→  try {
+   238→    // ---- Prisma (source of truth, wipe-proof) ----
+   239→    await db.customer.upsert({
+   240→      where: { phone: session.phone },
+   241→      update: { name: session.name },
+   242→      create: { phone: session.phone, name: session.name },
+   243→    });
+   244→    await db.application.create({
+   245→      data: {
+   246→        applicationId: aid,
+   247→        customerPhone: session.phone,
+   248→        serviceId: state.serviceId ?? "",
+   249→        status: "PAYMENT_PENDING",
+   250→        govFee: svc?.government_fee ?? 0,
+   251→        serviceCharge: svc?.service_charge ?? 0,
+   252→        gst: svc?.gst_percent ?? 18,
+   253→        totalFee: svc?.total_fee ?? 0,
+   254→        formData: JSON.stringify({ ...formData, _source: "WEB_CHAT", _customer_name: session.name }),
+   255→        applicationNumber: number,
+   256→      },
+   257→    });
+   258→    for (const [k, v] of Object.entries(collected)) {
+   259→      await db.applicationFieldValue.create({
+   260→        data: { applicationId: aid, phone: session.phone, fieldKey: k, fieldValue: v, validated: "TRUE" },
+   261→      });
+   262→    }
+   263→    for (const [docKey, d] of Object.entries(docsCollected)) {
+   264→      await db.applicationDocument.create({
+   265→        data: {
+   266→          applicationId: aid,
+   267→          phone: session.phone,
+   268→          docKey,
+   269→          mediaId: `WEB_${aid}_${docKey}`,
+   270→          mimeType: d.type,
+   271→          status: "RECEIVED",
+   272→          verifiedBy: "CUSTOMER",
+   273→        },
+   274→      });
+   275→    }
+   276→    await db.applicationStatusHistory.create({
+   277→      data: {
+   278→        applicationId: aid,
+   279→        applicationNumber: number,
+   280→        oldStatus: "",
+   281→        newStatus: "PAYMENT_PENDING",
+   282→        note: "Web chatbot se application bani",
+   283→      },
+   284→    });
+   285→    await db.payment.create({
+   286→      data: {
+   287→        paymentId: `PAYWEB${rand(8)}`,
+   288→        applicationId: aid,
+   289→        customerPhone: session.phone,
+   290→        amount: svc?.total_fee ?? 0,
+   291→        gateway: "UPI_MANUAL",
+   292→        transactionId: "",
+   293→        status: "PENDING",
+   294→      },
+   295→    });
+   296→    await db.operatorTask.create({
+   297→      data: {
+   298→        taskId: `TASKWEB${rand(8)}`,
+   299→        applicationId: aid,
+   300→        applicationNumber: number,
+   301→        operatorPhone: "",
+   302→        status: "PENDING",
+   303→        note: "Web chatbot se aya — customer ID: " + session.customerId,
+   304→      },
+   305→    });
+   306→  } catch (e) {
+   307→    // Prisma failure is abnormal — still reply success-shape but log stage summary honestly
+   308→    console.error("webchat finalize prisma error:", e);
+   309→  }
+   310→
+   311→  // ---- n8n live tables (dashboard visibility; best-effort) ----
+   312→  try {
+   313→    upsertCustomerN8n(session.phone, session.name);
+   314→    insertApplicationN8n({
+   315→      applicationId: aid,
+   316→      appNumber: number,
+   317→      phone: session.phone,
+   318→      name: session.name,
+   319→      serviceId: state.serviceId ?? "",
+   320→      govFee: svc?.government_fee ?? 0,
+   321→      serviceCharge: svc?.service_charge ?? 0,
+   322→      gst: svc?.gst_percent ?? 18,
+   323→      totalFee: svc?.total_fee ?? 0,
+   324→      formData,
+   325→      docs,
+   326→      source: "WEB_CHAT",
+   327→    });
+   328→  } catch { /* n8n down → fine */ }
+   329→
+   330→  const fieldCount = Object.values(collected).filter((v) => v && v !== "SKIP").length;
+   331→  const docCount = Object.keys(docsCollected).length;
+   332→  return [
+   333→    {
+   334→      text:
+   335→        `🎉 *Application ban gayi!*\n\n` +
+   336→        `📋 Application No: *${number}*\n` +
+   337→        `👤 Naam: ${session.name}\n` +
+   338→        `🛠 Seva: ${state.serviceName}\n` +
+   339→        `💰 Fees: ₹${svc?.total_fee ?? 0}\n` +
+   340→        `📝 Details: ${fieldCount} sawal + ${docCount} document\n\n` +
+   341→        `*Aage kya hoga:*\n` +
+   342→        `1. Operator aapki details check karega\n` +
+   343→        `2. Payment verification ke baad portal pe submit hoga\n` +
+   344→        `3. Status ka update milega\n\n` +
+   345→        `Apna application number kahin save kar lein! 🙏`,
+   346→    },
+   347→    {
+   348→      text: "Aur koi seva chahiye?",
+   349→      chips: ["🆕 Nayi seva", "❓ Sawaal puchhna he"],
+   350→    },
+   351→  ];
+   352→}
+   353→
+   354→function resetState(): WebState {
+   355→  return { collected: {}, docsCollected: {}, fails: 0 };
+   356→}
+   357→
+   358→// ============================================================
+   359→// MAIN ENTRY
+   360→// ============================================================
+   361→
+   362→export async function processInput(
+   363→  session: EngineSession,
+   364→  input: EngineInput
+   365→): Promise<EngineResult> {
+   366→  const text = (input.text ?? "").trim();
+   367→  const att = input.attachment;
+   368→  let stage = session.stage;
+   369→  let state: WebState = session.state ?? resetState();
+   370→  const replies: BotReply[] = [];
+   371→  let patchOut: Partial<EngineSession> = {};
+   372→
+   373→  const setStage = (s: string) => (stage = s);
+   374→  const say = (r: BotReply) => replies.push(r);
+   375→  const phoneForAI = session.phone || `web_${hashId(session.sessionId)}`;
+   376→
+   377→  // ---------- GLOBAL CANCEL (any stage) ----------
+   378→  if (text && isCancel(text) && stage !== STAGE.NAME && stage !== STAGE.PHONE) {
+   379→    setStage(STAGE.MENU);
+   380→    state = resetState();
+   381→    say({ text: "Theek he, cancel kar diya. Koi baat nahi! 😊" });
+   382→    say(await menuReply());
+   383→    return { replies, patch: { stage, state } };
+   384→  }
+   385→
+   386→  switch (stage) {
+   387→    // ================= STEP 1: NAME =================
+   388→    case STAGE.NAME: {
+   389→      const looksPhone = /^\+?\d[\d\s-]{7,}$/.test(text);
+   390→      const isGreeting = /^(hi|hii|hiii|hello|namaste|namaskar|hey|salam|salaam|assalam|good (morning|afternoon|evening)|start|shuru)\b/i.test(text);
+   391→      if (isGreeting) {
+   392→        say({
+   393→          text:
+   394→            "Namaste! 🙏 Main *Ravi* hoon — CSC Smart Seva ka assistant.\n\nSarkari kaam ghar baithe — PAN card, ITR, GST, certificate sab yahin se.\n\nChaliye shuru karte hein — *aapka pura naam* likhein.",
+   395→        });
+   396→        break;
+   397→      }
+   398→      if (!text || text.length < 2 || looksPhone || !/[a-zA-Z]/.test(text)) {
+   399→        say({
+   400→          text: looksPhone
+   401→            ? "Pehle aapka naam chahiye 😊 Naam likhein, phir number."
+   402→            : "Naam thoda sahi se likhein (jaise: Ramesh Kumar).",
+   403→        });
+   404→        break;
+   405→      }
+   406→      const name = text.slice(0, 60).replace(/\s+/g, " ");
+   407→      session.name = name;
+   408→      patchOut.name = name;
+   409→      setStage(STAGE.PHONE);
+   410→      say({
+   411→        text: `Namaste *${name}*! 🙏\nMain Ravi hoon — CSC Smart Seva ka assistant.\n\nAb aapka *mobile number* likhein (10 digit) — isi se aapki customer ID banegi.`,
+   412→      });
+   413→      break;
+   414→    }
+   415→
+   416→    // ================= STEP 2: PHONE + ID =================
+   417→    case STAGE.PHONE: {
+   418→      const v = validateField("MOBILE", text);
+   419→      if (!v.ok) {
+   420→        say({ text: `${v.reason} Dobara likhein.` });
+   421→        break;
+   422→      }
+   423→      const phone = v.value;
+   424→      session.phone = phone;
+   425→      const cid = `CUST-2026-${rand(5)}`;
+   426→      session.customerId = cid;
+   427→      state = resetState();
+   428→
+   429→      try {
+   430→        await db.customer.upsert({
+   431→          where: { phone },
+   432→          update: { name: session.name },
+   433→          create: { phone, name: session.name },
+   434→        });
+   435→      } catch { /* non-fatal */ }
+   436→      try {
+   437→        upsertCustomerN8n(phone, session.name);
+   438→      } catch { /* n8n down */ }
+   439→
+   440→      setStage(STAGE.MENU);
+   441→      say({
+   442→        text:
+   443→          `🎉 *Aapki ID ban gayi!*\n\n` +
+   444→          `👤 Customer ID: *${cid}*\n` +
+   445→          `📱 Mobile: ${phone}\n` +
+   446→          `🧑 Naam: ${session.name}\n\n` +
+   447→          `Ab se har seva isi ID pe hogi. services dikhata hoon 👇`,
+   448→      });
+   449→      say(await menuReply());
+   450→      break;
+   451→    }
+   452→
+   453→    // ================= MENU =================
+   454→    case STAGE.MENU: {
+   455→      const services = await getServices();
+   456→      const svc = text ? findService(text, services) : null;
+   457→      if (svc) {
+   458→        setStage(STAGE.OFFER);
+   459→        say(...(await startService(state, svc)));
+   460→        break;
+   461→      }
+   462→      // nayi seva chip / general question → AI
+   463→      if (text) {
+   464→        const ai = await aiGeneralChat(phoneForAI, text);
+   465→        if (ai) {
+   466→          say({ text: ai });
+   467→          say({ text: "Koi seva chahiye to card par dabayein 👇", cards: services });
+   468→        } else {
+   469→          say({ text: "Main services ke bare me batata hoon 👇" });
+   470→          say(await menuReply());
+   471→        }
+   472→        break;
+   473→      }
+   474→      say(await menuReply());
+   475→      break;
+   476→    }
+   477→
+   478→    // ================= OFFER (fee confirm) =================
+   479→    case STAGE.OFFER: {
+   480→      const services = await getServices();
+   481→      const svc =
+   482→        services.find((s) => s.service_id === state.serviceId) ??
+   483→        (text ? findService(text, services) : null);
+   484→      if (!svc) {
+   485→        setStage(STAGE.MENU);
+   486→        state = resetState();
+   487→        say({ text: "Service select karein 👇" });
+   488→        say(await menuReply());
+   489→        break;
+   490→      }
+   491→      if (isConfirm(text)) {
+   492→        const next = await askCurrentField(state);
+   493→        if (next) {
+   494→          setStage(STAGE.FIELDS);
+   495→          say({ text: `Badhiya! Kuch details chahiye — sirf ${state.fields?.length ?? 0} chhote sawal 👇` });
+   496→          say(next);
+   497→        } else {
+   498→          const d = await askCurrentDoc(state);
+   499→          if (d) {
+   500→            setStage(STAGE.DOCS);
+   501→            say({ text: `Ab documents chahiye 📄` });
+   502→            say(d);
+   503→          } else {
+   504→            setStage(STAGE.PAYMENT);
+   505→            say(await beginPayment(svc));
+   506→          }
+   507→        }
+   508→        break;
+   509→      }
+   510→      // side question / different service
+   511→      const otherSvc = findService(text, services);
+   512→      if (otherSvc && otherSvc.service_id !== state.serviceId) {
+   513→        say(...(await startService(state, otherSvc)));
+   514→        break;
+   515→      }
+   516→      if (isMenu(text)) {
+   517→        setStage(STAGE.MENU);
+   518→        state = resetState();
+   519→        say(await menuReply());
+   520→        break;
+   521→      }
+   522→      if (text) {
+   523→        const ai = await aiGeneralChat(phoneForAI, text);
+   524→        if (ai) say({ text: ai });
+   525→      }
+   526→      say({
+   527→        text: `${svc.service_name} ke liye aage badhna he to *Confirm karo* dabayein 👇`,
+   528→        chips: ["✅ Confirm karo", "📋 Menu wapas"],
+   529→      });
+   530→      break;
+   531→    }
+   532→
+   533→    // ================= FIELDS =================
+   534→    case STAGE.FIELDS: {
+   535→      const fields = state.fields ?? [];
+   536→      let i = state.fidx ?? 0;
+   537→      if (i >= fields.length) {
+   538→        // shouldn't happen; jump to docs/payment
+   539→        const d = await askCurrentDoc(state);
+   540→        if (d) {
+   541→          setStage(STAGE.DOCS);
+   542→          say(d);
+   543→        } else {
+   544→          setStage(STAGE.PAYMENT);
+   545→          const svc = (await getServices()).find((s) => s.service_id === state.serviceId);
+   546→          if (svc) say(await beginPayment(svc));
+   547→        }
+   548→        break;
+   549→      }
+   550→      const f = fields[i];
+   551→
+   552→      // user sent a file while a text answer was expected
+   553→      if (att) {
+   554→        say({
+   555→          text: `Ye sawal likhkar jawab dena he: ${f.question}`,
+   556→        });
+   557→        break;
+   558→      }
+   559→
+   560→      if (isMenu(text)) {
+   561→        setStage(STAGE.MENU);
+   562→        state = resetState();
+   563→        say(await menuReply());
+   564→        break;
+   565→      }
+   566→
+   567→      const canSkip = !f.required || (state.fails ?? 0) >= 3;
+   568→      if (isSkip(text)) {
+   569→        if (canSkip) {
+   570→          state.collected = { ...(state.collected ?? {}), [f.field_key]: "SKIP" };
+   571→          state.fails = 0;
+   572→          i += 1;
+   573→          state.fidx = i;
+   574→          const nxt = await askCurrentField(state);
+   575→          if (nxt) {
+   576→            say({ text: `${ack()} — SKIP 👍` });
+   577→            say(nxt);
+   578→          } else {
+   579→            const d = await askCurrentDoc(state);
+   580→            if (d) {
+   581→              setStage(STAGE.DOCS);
+   582→              say({ text: "Sawal complete! Ab documents 📄" });
+   583→              say(d);
+   584→            } else {
+   585→              setStage(STAGE.PAYMENT);
+   586→              const svc = (await getServices()).find((s) => s.service_id === state.serviceId);
+   587→              if (svc) say(await beginPayment(svc));
+   588→            }
+   589→          }
+   590→        } else {
+   591→          say({ text: "Ye sawal zaroori he — jawab likhein. (3 baar try ke baad SKIP ho jayega)" });
+   592→        }
+   593→        break;
+   594→      }
+   595→
+   596→      // AI side-question gate (same as WhatsApp bot)
+   597→      const gate = await aiFieldGate({
+   598→        phone: phoneForAI,
+   599→        name: session.name,
+   600→        text,
+   601→        state: "FIELDS",
+   602→        serviceName: state.serviceName ?? "",
+   603→        field: { label: f.label, question: f.question },
+   604→        collected: state.collected ?? {},
+   605→      });
+   606→      if (gate && gate.action === "reply") {
+   607→        say({ text: gate.reply });
+   608→        say({ text: `Wapas sawal: ${f.question}` });
+   609→        break;
+   610→      }
+   611→
+   612→      // validate
+   613→      const v = f.field_type === "CHOICE" ? matchChoice(f.options, text) : validateField(f.field_type, text);
+   614→      if (!v.ok) {
+   615→        state.fails = (state.fails ?? 0) + 1;
+   616→        const extra =
+   617→          (state.fails ?? 0) >= 3
+   618→            ? "\n\n(Tip: *SKIP* likhkar is sawal ko chhod sakte hein — operator baad me bhar dega)"
+   619→            : "";
+   620→        say({ text: `⚠️ ${v.reason}${extra}\n\n${f.question}` });
+   621→        break;
+   622→      }
+   623→
+   624→      state.collected = { ...(state.collected ?? {}), [f.field_key]: v.value };
+   625→      state.fails = 0;
+   626→      i += 1;
+   627→      state.fidx = i;
+   628→      const nxt = await askCurrentField(state);
+   629→      if (nxt) {
+   630→        say({ text: `${ack()} (${i}/${fields.length})` });
+   631→        say(nxt);
+   632→      } else {
+   633→        const d = await askCurrentDoc(state);
+   634→        if (d) {
+   635→          setStage(STAGE.DOCS);
+   636→          say({ text: `Sawal complete! 🎯 Ab *${state.docs?.length ?? 0}* document chahiye 📄` });
+   637→          say(d);
+   638→        } else {
+   639→          setStage(STAGE.PAYMENT);
+   640→          const svc = (await getServices()).find((s) => s.service_id === state.serviceId);
+   641→          if (svc) say(await beginPayment(svc));
+   642→        }
+   643→      }
+   644→      break;
+   645→    }
+   646→
+   647→    // ================= DOCS =================
+   648→    case STAGE.DOCS: {
+   649→      const docs = state.docs ?? [];
+   650→      let i = state.didx ?? 0;
+   651→      if (i >= docs.length) {
+   652→        const svc = (await getServices()).find((s) => s.service_id === state.serviceId);
+   653→        setStage(STAGE.PAYMENT);
+   654→        if (svc) say(await beginPayment(svc));
+   655→        break;
+   656→      }
+   657→      const d = docs[i];
+   658→
+   659→      if (att) {
+   660→        const okType =
+   661→          /^image\//.test(att.type) ||
+   662→          att.type === "application/pdf" ||
+   663→          /\.(jpe?g|png|webp|pdf|heic)$/i.test(att.name);
+   664→        if (!okType) {
+   665→          say({ text: "Sirf *photo (JPG/PNG)* ya *PDF* chalta he. Dobara bhejein." });
+   666→          break;
+   667→        }
+   668→        if (att.size > 4 * 1024 * 1024) {
+   669→          say({ text: "File 4MB se chhoti honi chahiye. Photo thodi compress karke bhejein." });
+   670→          break;
+   671→        }
+   672→        state.docsCollected = {
+   673→          ...(state.docsCollected ?? {}),
+   674→          [d.doc_key]: { name: att.name, type: att.type || "image/jpeg", size: att.size },
+   675→        };
+   676→        i += 1;
+   677→        state.didx = i;
+   678→        const nxt = await askCurrentDoc(state);
+   679→        if (nxt) {
+   680→          say({ text: `✅ ${d.label} mil gaya! (${i}/${docs.length})` });
+   681→          say(nxt);
+   682→        } else {
+   683→          const svc = (await getServices()).find((s) => s.service_id === state.serviceId);
+   684→          setStage(STAGE.PAYMENT);
+   685→          say({ text: `✅ ${d.label} mil gaya! Sab documents complete 🎯` });
+   686→          if (svc) say(await beginPayment(svc));
+   687→        }
+   688→        break;
+   689→      }
+   690→
+   691→      if (isMenu(text)) {
+   692→        setStage(STAGE.MENU);
+   693→        state = resetState();
+   694→        say(await menuReply());
+   695→        break;
+   696→      }
+   697→
+   698→      if (isSkip(text)) {
+   699→        if (!d.required) {
+   700→          i += 1;
+   701→          state.didx = i;
+   702→          state.docsCollected = { ...(state.docsCollected ?? {}), [d.doc_key]: { name: "SKIP", type: "text/plain", size: 0 } };
+   703→          const nxt = await askCurrentDoc(state);
+   704→          if (nxt) say(nxt);
+   705→          else {
+   706→            const svc = (await getServices()).find((s) => s.service_id === state.serviceId);
+   707→            setStage(STAGE.PAYMENT);
+   708→            if (svc) say(await beginPayment(svc));
+   709→          }
+   710→        } else {
+   711→          say({ text: `${d.label} zaroori he — photo/PDF bhejein. (Operator baad me manga sakta he)` });
+   712→        }
+   713→        break;
+   714→      }
+   715→
+   716→      // text while file expected → AI gate for side questions
+   717→      const gate = await aiFieldGate({
+   718→        phone: phoneForAI,
+   719→        name: session.name,
+   720→        text,
+   721→        state: "DOCS",
+   722→        serviceName: state.serviceName ?? "",
+   723→        field: { label: d.label, question: d.question },
+   724→        collected: state.collected ?? {},
+   725→      });
+   726→      if (gate && gate.action === "reply") {
+   727→        say({ text: gate.reply });
+   728→        say({ text: `Document: ${d.question}`, expectFile: true });
+   729→        break;
+   730→      }
+   731→      say({
+   732→        text: `${d.label} ki *photo ya PDF* attach karke bhejein 📎${d.required ? "" : " (ya *SKIP* likhein)"}`,
+   733→        expectFile: true,
+   734→        chips: d.required ? [] : ["SKIP"],
+   735→      });
+   736→      break;
+   737→    }
+   738→
+   739→    // ================= PAYMENT =================
+   740→    case STAGE.PAYMENT: {
+   741→      const services = await getServices();
+   742→      const svc = services.find((s) => s.service_id === state.serviceId);
+   743→      if (!svc) {
+   744→        setStage(STAGE.MENU);
+   745→        state = resetState();
+   746→        say(await menuReply());
+   747→        break;
+   748→      }
+   749→      if (isPaid(text) || isConfirm(text)) {
+   750→        setStage(STAGE.DONE);
+   751→        say(...(await finalize(session)));
+   752→        break;
+   753→      }
+   754→      if (text) {
+   755→        const gate = await aiFieldGate({
+   756→          phone: phoneForAI,
+   757→          name: session.name,
+   758→          text,
+   759→          state: "PAYMENT",
+   760→          serviceName: state.serviceName ?? "",
+   761→          field: { label: "Payment", question: "Payment karke Paid likhna he" },
+   762→          collected: state.collected ?? {},
+   763→        });
+   764→        if (gate && gate.action === "reply") {
+   765→          say({ text: gate.reply });
+   766→          say({ text: "Payment ho jaye to *Paid* likhein 👇", chips: ["✅ Paid ho gaya"] });
+   767→          break;
+   768→        }
+   769→        const ai = await aiGeneralChat(phoneForAI, text);
+   770→        if (ai) {
+   771→          say({ text: ai });
+   772→          say({ text: "Payment ho jaye to *Paid* likhein 👇", chips: ["✅ Paid ho gaya"] });
+   773→          break;
+   774→        }
+   775→      }
+   776→      say(await beginPayment(svc));
+   777→      break;
+   778→    }
+   779→
+   780→    // ================= DONE =================
+   781→    case STAGE.DONE: {
+   782→      if (isMenu(text) || /nayi|new/i.test(text)) {
+   783→        setStage(STAGE.MENU);
+   784→        state = resetState();
+   785→        say({ text: "Sure! 👇" });
+   786→        say(await menuReply());
+   787→        break;
+   788→      }
+   789→      if (text) {
+   790→        const ai = await aiGeneralChat(phoneForAI, text);
+   791→        if (ai) {
+   792→          say({ text: ai });
+   793→          say({ text: "Aur koi seva chahiye? 👇", chips: ["🆕 Nayi seva"] });
+   794→          break;
+   795→        }
+   796→      }
+   797→      say({ text: "Nayi seva ke liye *Nayi seva* dabayein 👇", chips: ["🆕 Nayi seva"] });
+   798→      break;
+   799→    }
+   800→
+   801→    // ================= fallback =================
+   802→    default: {
+   803→      setStage(STAGE.MENU);
+   804→      say(await menuReply());
+   805→    }
+   806→  }
+   807→
+   808→  if (!replies.length) {
+   809→    replies.push({ text: "Ek minute… samajh nahi aaya. Dobara try karein ya *Menu* likhein." });
+   810→  }
+   811→
+   812→  return { replies, patch: { stage, ...patchOut, state } };
+   813→}
+   814→
+   815→export { STAGE };
+   816→

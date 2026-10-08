@@ -1,0 +1,548 @@
+{
+ "id": "3c5c2121-0000-4000-8000-000000000021",
+ "name": "CSC 21 - Reminder Engine (Anti-Harassment)",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "cronExpression",
+       "expression": "0 9,15,21 * * *"
+      }
+     ]
+    }
+   },
+   "name": "Every 6 Hours",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=REMINDER_MAX_PER_APP"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Reminder Cfg",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=REMINDER_QUIET_START"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Quiet Start",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=REMINDER_QUIET_END"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Quiet End",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst qs = $('Get Quiet Start').first().json.config_value || '21:00';\nconst qe = $('Get Quiet End').first().json.config_value || '09:00';\nconst nowIst = new Date(Date.now() + 5.5 * 3600 * 1000);\nconst hhmm = String(nowIst.getUTCHours()).padStart(2, '0') + ':' + String(nowIst.getUTCMinutes()).padStart(2, '0');\nconst quiet = (hhmm >= qs) || (hhmm < qe);\nreturn [{ json: { quiet, hhmm, maxReminders: Number($('Get Reminder Cfg').first().json.config_value || 3) } }];"
+   },
+   "name": "Quiet Hours Check",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-InQuietHours",
+       "leftValue": "={{ $json.quiet }}",
+       "rightValue": "true",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "In Quiet Hours?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nreturn [{ json: { skipped: true, reason: 'quiet hours - anti-harassment rule' } }];"
+   },
+   "name": "Skip Quiet",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "conversation_state"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "state",
+       "condition": "eq",
+       "keyValue": "=DOCS"
+      }
+     ]
+    },
+    "returnAll": true
+   },
+   "name": "Get DOCS Convos",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "returnAll": true,
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "conversation_state"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "state",
+       "condition": "eq",
+       "keyValue": "=PAYMENT"
+      }
+     ]
+    },
+    "returnAll": true
+   },
+   "name": "Get PAYMENT Convos",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "returnAll": true,
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst items = [];\ntry { const _seenC = new Set(); for (const i of $('Get DOCS Convos').all()) { const it = i.json; if (!it || !it.phone || _seenC.has(it.phone)) continue; _seenC.add(it.phone); items.push({ phone: it.phone, type: 'DOCS', service_id: it.service_id, context_data: it.context_data || '{}' }); } } catch (e) {}\ntry { const _seenP = new Set(); for (const i of $('Get PAYMENT Convos').all()) { const it = i.json; if (!it || !it.phone || _seenP.has(it.phone)) continue; _seenP.add(it.phone); items.push({ phone: it.phone, type: 'PAYMENT', service_id: it.service_id, context_data: it.context_data || '{}' }); } } catch (e) {}\nreturn items.length ? items.map(i => ({ json: i })) : [{ json: { none: true } }];"
+   },
+   "name": "Build Reminder Items",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst item = $json;\nif (item.none) return [{ json: { skip: true, phone: '', reason: 'no pending conversations' } }];\nlet ctx = {};\ntry { ctx = JSON.parse(item.context_data || '{}'); } catch (e) {}\nconst count = Number(ctx.reminder_count || 0);\nconst maxR = Number($('Quiet Hours Check').first().json.maxReminders || 3);\nif (count >= maxR) return [{ json: { skip: true, phone: item.phone, reason: 'max reminders reached (' + count + ')' } }];\nlet msg;\nif (item.type === 'DOCS') msg = '\\ud83d\\udcc4 Yaad dilayein: aapke application ke documents pending hain. Photo/PDF bhejein taaki kaam aage badhe.';\nelse msg = '\\ud83d\\udcb3 Yaad dilayein: aapka payment pending hai. Payment confirm hote hi kaam aage badhega.';\nmsg += '\\n\\n(Ye reminder ' + (count + 1) + '/' + maxR + ' hai. CANCEL se band kar sakte hain.)';\nconst newCtx = JSON.stringify({ ...ctx, reminder_count: count + 1 });\nreturn [{ json: { skip: false, phone: item.phone, message: msg, type: item.type, application_id: ctx.application_id || '', newCount: count + 1, newCtx } }];"
+   },
+   "name": "Compute Reminder",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-ShouldRemind",
+       "leftValue": "={{ $json.skip }}",
+       "rightValue": "false",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Should Remind?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "action": "send_whatsapp",
+      "phone": "={{ $json.phone }}",
+      "message": "={{ $json.message }}",
+      "template": "=REMINDER_{{ $json.type }}",
+      "related_id": "={{ $json.application_id || $json.phone }}"
+     }
+    }
+   },
+   "name": "Send Reminder",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "conversation_state"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "phone",
+       "condition": "eq",
+       "keyValue": "={{ $('Compute Reminder').item.json.phone }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "context_data": "={{ $('Compute Reminder').item.json.newCtx }}",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Bump Reminder Count",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "reminders_log"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Compute Reminder').first().json.phone }}",
+      "application_id": "={{ $('Compute Reminder').first().json.application_id }}",
+      "reminder_type": "={{ $('Compute Reminder').first().json.type }}",
+      "count": "={{ $('Compute Reminder').first().json.newCount }}",
+      "sent_at": "={{ $now.toISO() }}",
+      "status": "SENT"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Log Reminder",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Every 6 Hours": {
+   "main": [
+    [
+     {
+      "node": "Get Reminder Cfg",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Reminder Cfg": {
+   "main": [
+    [
+     {
+      "node": "Get Quiet Start",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Quiet Start": {
+   "main": [
+    [
+     {
+      "node": "Get Quiet End",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Quiet End": {
+   "main": [
+    [
+     {
+      "node": "Quiet Hours Check",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Quiet Hours Check": {
+   "main": [
+    [
+     {
+      "node": "In Quiet Hours?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "In Quiet Hours?": {
+   "main": [
+    [
+     {
+      "node": "Get DOCS Convos",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Skip Quiet",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get DOCS Convos": {
+   "main": [
+    [
+     {
+      "node": "Get PAYMENT Convos",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get PAYMENT Convos": {
+   "main": [
+    [
+     {
+      "node": "Build Reminder Items",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Build Reminder Items": {
+   "main": [
+    [
+     {
+      "node": "Compute Reminder",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Compute Reminder": {
+   "main": [
+    [
+     {
+      "node": "Should Remind?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Should Remind?": {
+   "main": [
+    [
+     {
+      "node": "Send Reminder",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    []
+   ]
+  },
+  "Send Reminder": {
+   "main": [
+    [
+     {
+      "node": "Bump Reminder Count",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Bump Reminder Count": {
+   "main": [
+    [
+     {
+      "node": "Log Reminder",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

@@ -1,0 +1,65 @@
+# ============================================================
+# CSC Smart Seva - Evolution API (Free WhatsApp) Setup
+# Usage:  docker compose up -d
+# Guide:  SETUP_GUIDE.md dekho
+# ============================================================
+
+services:
+  evolution-postgres:
+    image: postgres:16
+    container_name: evolution-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-CHANGE_ME_STRONG_DB_PASS}
+      POSTGRES_DB: evolution
+    volumes:
+      - evolution_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolution"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  evolution-api:
+    image: atendim/evolution-api:latest
+    container_name: evolution-api
+    restart: always
+    depends_on:
+      evolution-postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # ---------- AUTH (ye key n8n mein bhi dalni hai) ----------
+      AUTHENTICATION_TYPE: apiKey
+      AUTHENTICATION_API_KEY: ${EVO_API_KEY:-CHANGE_ME_CSC_EVO_KEY_2026}
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES_API_KEY: "true"
+
+      # ---------- DATABASE ----------
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://evolution:${DB_PASSWORD:-CHANGE_ME_STRONG_DB_PASS}@evolution-postgres:5432/evolution?schema=public
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_MESSAGE: "true"
+      DATABASE_SAVE_DATA_CONTACTS: "true"
+      DATABASE_SAVE_DATA_CHATS: "true"
+
+      # ---------- SERVER ----------
+      SERVER_TYPE: http
+      SERVER_PORT: 8080
+      SERVER_URL: ${SERVER_URL:-http://localhost:8080}
+
+      # ---------- CACHE (chhote server pe off) ----------
+      CACHE_REDIS_ENABLED: "false"
+
+      # ---------- MISC ----------
+      LOG_LEVEL: WARN
+      QRCODE_COLOR: "#198754"
+      CONFIG_DELETION_DAYS: 7
+    volumes:
+      - evolution_instances:/evolution/instances
+
+volumes:
+  evolution_data:
+  evolution_instances:

@@ -1,0 +1,163 @@
+{
+ "id": "3c5c1010-0000-4000-8000-000000000010",
+ "name": "CSC 10 - Document Validator",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $json.application_id }}"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get App",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c0505-0000-4000-8000-000000000005",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "action": "get_full_config",
+      "service_id": "={{ $json.service_id || '' }}"
+     }
+    }
+   },
+   "name": "Load Config",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "application_documents"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $('Get App').first().json.application_id }}"
+      }
+     ]
+    },
+    "returnAll": true
+   },
+   "name": "Get Saved Docs",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "returnAll": true,
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst cfg = $('Load Config').first().json || {};\nconst app = $('Get App').first().json;\nconst required = cfg.documents || [];\nlet saved = [];\ntry { saved = $input.all().map(i => i.json).filter(d => d && d.doc_key); } catch (e) {}\nconst savedKeys = saved.map(d => d.doc_key);\nconst missing = required.filter(d => !savedKeys.includes(d.doc_key));\nconst received = required.filter(d => savedKeys.includes(d.doc_key));\nconst noOcr = saved.filter(d => savedKeys.includes(d.doc_key) && !d.ocr_text).map(d => d.doc_key);\nlet msg = '';\nif (missing.length === 0) {\n  msg = '\\u2705 Saare ' + required.length + ' documents mil gaye hain.';\n  if (noOcr.length) msg += '\\n\\u2139\\ufe0f OCR pending: ' + noOcr.join(', ') + ' (operator verify karega)';\n} else {\n  msg = '\\ud83d\\udcc4 Documents: ' + received.length + '/' + required.length + ' mile.\\nMissing: ' + missing.map(m => m.label || m.doc_key).join(', ');\n}\nreturn [{ json: {\n  ok: true, application_id: app.application_id, application_number: app.application_number,\n  complete: missing.length === 0, received: received.map(r => r.doc_key),\n  missing: missing.map(m => m.doc_key), missing_labels: missing.map(m => m.label || m.doc_key),\n  ocr_pending: noOcr, message: msg\n} }];"
+   },
+   "name": "Validate Docs",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Get App",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get App": {
+   "main": [
+    [
+     {
+      "node": "Load Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Load Config": {
+   "main": [
+    [
+     {
+      "node": "Get Saved Docs",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Saved Docs": {
+   "main": [
+    [
+     {
+      "node": "Validate Docs",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

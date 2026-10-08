@@ -1,0 +1,294 @@
+{
+ "id": "3c5c0004-0000-4000-8000-000000000001",
+ "name": "CSC 01 - WhatsApp Main Router",
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "active": false,
+ "pinData": {},
+ "nodes": [
+  {
+   "id": "a-w1",
+   "name": "WhatsApp Webhook",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    200,
+    300
+   ],
+   "webhookId": "wa-hook-0001",
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "csc-whatsapp",
+    "responseMode": "onReceived",
+    "options": {}
+   }
+  },
+  {
+   "id": "a-w2",
+   "name": "WhatsApp Verify",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    200,
+    520
+   ],
+   "webhookId": "wa-hook-0002",
+   "parameters": {
+    "httpMethod": "GET",
+    "path": "csc-whatsapp",
+    "responseMode": "responseNode",
+    "options": {}
+   }
+  },
+  {
+   "id": "a-r1",
+   "name": "Return Challenge",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    420,
+    520
+   ],
+   "parameters": {
+    "respondWith": "text",
+    "responseBody": "={{ $json.query['hub.challenge'] }}",
+    "options": {}
+   }
+  },
+  {
+   "id": "a-n",
+   "name": "Normalize Message",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    420,
+    300
+   ],
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "// Normalize Meta WhatsApp Cloud API payload + route (spec section 1, 19, 24)\nconst body = $json.body || {};\nconst value = (body.entry && body.entry[0] && body.entry[0].changes && body.entry[0].changes[0] && body.entry[0].changes[0].value) || {};\nconst msg = (value.messages && value.messages[0]) || null;\n\nif (!msg) return [{ json: { route: 'IGNORE', reply: null, phone: '', name: '', text: '' } }];\n\nconst name = (value.contacts && value.contacts[0] && value.contacts[0].profile && value.contacts[0].profile.name) || 'Customer';\nconst phone = msg.from || '';\nconst type = msg.type || 'unknown';\n\nlet text = '';\nif (type === 'text') text = (msg.text && msg.text.body) || '';\nelse if (type === 'interactive') {\n  const it = msg.interactive || {};\n  text = (it.button_reply && it.button_reply.title) || (it.list_reply && it.list_reply.title) || '';\n}\n\nconst t = text.toLowerCase().trim();\nlet route = 'PHASE2';\nif (type === 'text' || type === 'interactive') {\n  if (['human', 'agent', 'operator', 'help'].includes(t)) route = 'HUMAN';\n  else if (t === 'status' || t.startsWith('status') || t === 'track') route = 'STATUS';\n  else route = 'AI';\n}\nreturn [{ json: { route, phone, name, text, type } }];"
+   }
+  },
+  {
+   "id": "a-if1",
+   "name": "Route STATUS?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    640,
+    300
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c-s",
+       "leftValue": "={{ $json.route }}",
+       "rightValue": "STATUS",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "a-if2",
+   "name": "Route HUMAN?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    860,
+    300
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c-h",
+       "leftValue": "={{ $json.route }}",
+       "rightValue": "HUMAN",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "a-if3",
+   "name": "Route AI?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1080,
+    300
+   ],
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c-a",
+       "leftValue": "={{ $json.route }}",
+       "rightValue": "AI",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   }
+  },
+  {
+   "id": "a-st",
+   "name": "Status Stub",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1300,
+    100
+   ],
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const t = $json;\nreturn [{ json: { reply: '\\ud83d\\udccb ' + t.name + ', status tracking Phase 9 mein activate hoga.\\n\\nFilhaal aap operator se baat kar sakte hain - HUMAN likhein.', phone: t.phone } }];"
+   }
+  },
+  {
+   "id": "a-ho",
+   "name": "Handoff Stub",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1300,
+    300
+   ],
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const t = $json;\nreturn [{ json: { reply: '\\ud83d\\udc64\\u200d\\ud83d\\udcbc Aapki chat CSC operator ko transfer ki ja rahi hai.\\nKripya thodi der pratiyeksha karein.', phone: t.phone } }];"
+   }
+  },
+  {
+   "id": "a-p2",
+   "name": "Phase 2 Stub",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1300,
+    520
+   ],
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const t = $json;\nreturn [{ json: { reply: '\\ud83d\\udcc4 Document/media upload Phase 2 mein enable hoga.\\nFilhaal text mein apni service batayein (jaise: PAN card banana hai).', phone: t.phone } }];"
+   }
+  },
+  {
+   "id": "a-ai",
+   "name": "AI Intent (CSC 02)",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    1300,
+    720
+   ],
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c0003-0000-4000-8000-000000000002"
+   }
+  },
+  {
+   "id": "a-br",
+   "name": "Build WhatsApp Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1520,
+    300
+   ],
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "// Build WhatsApp Cloud API send payload\n// NOTE: Production credentials yahan ya n8n Credentials se configure karein (spec section 25)\nconst CONFIG = {\n  graphVersion: 'v22.0',\n  phoneNumberId: 'REPLACE_WITH_WABA_PHONE_NUMBER_ID',\n  wabaToken: 'REPLACE_WITH_WABA_ACCESS_TOKEN'\n};\nconst { reply, phone } = $json;\nif (!reply || !phone) return [];\nconst payload = { messaging_product: 'whatsapp', to: phone, type: 'text', text: { body: reply } };\nreturn [{ json: { config: CONFIG, payload } }];"
+   }
+  },
+  {
+   "id": "a-send",
+   "name": "Send WhatsApp Message",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1740,
+    300
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "=https://graph.facebook.com/{{ $json.config.graphVersion }}/{{ $json.config.phoneNumberId }}/messages",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{ $json.config.wabaToken }}"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json.payload) }}",
+    "options": {}
+   }
+  }
+ ],
+ "connections": {
+  "WhatsApp Webhook": {
+   "main": [
+    [
+     {
+      "node": "Normalize Message",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "WhatsApp Verify": {
+   "main": [
+    [
+     {
+      "node": "Return Challenge",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ }
+}

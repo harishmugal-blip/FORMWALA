@@ -1,0 +1,1335 @@
+{
+ "id": "3c5c2020-0000-4000-8000-000000000020",
+ "name": "CSC 20 - Notification Engine (WhatsApp Sender)",
+ "description": null,
+ "active": true,
+ "activeVersionId": "836ceeed-d8bf-441d-beaf-b6f4f10b3b91",
+ "createdAt": "2026-09-28T13:38:01.248Z",
+ "updatedAt": "2026-09-30T17:07:43.550Z",
+ "isArchived": false,
+ "versionId": "836ceeed-d8bf-441d-beaf-b6f4f10b3b91",
+ "versionCounter": 6,
+ "sourceWorkflowId": null,
+ "triggerCount": 0,
+ "nodes": [
+  {
+   "id": "b11fa3cf-531b-4a94-9ec5-f018047e4c84",
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "inputSource": "passthrough"
+   }
+  },
+  {
+   "id": "a745aacc-5142-4dc8-a40c-843436e99195",
+   "name": "Log Notification",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "notifications_log"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $json.phone }}",
+      "template": "={{ $json.template || 'GENERIC' }}",
+      "message": "={{ ($json.message || '').slice(0, 2000) }}",
+      "status": "QUEUED",
+      "related_id": "={{ $json.related_id || $json.phone }}",
+      "error": "",
+      "created_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   }
+  },
+  {
+   "id": "8b088d1c-1cad-46b4-bc42-3068990d9f53",
+   "name": "Get Phone ID",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "alwaysOutputData": true,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=WHATSAPP_PHONE_NUMBER_ID"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   }
+  },
+  {
+   "id": "14c5163e-32ba-4161-8ba6-6659486527af",
+   "name": "Get Token",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "alwaysOutputData": true,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=WHATSAPP_ACCESS_TOKEN"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   }
+  },
+  {
+   "id": "c899a5eb-db2b-4a98-a652-8fb645966dd4",
+   "name": "Get API Ver",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "alwaysOutputData": true,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=WHATSAPP_API_BASE"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   }
+  },
+  {
+   "id": "11b94b3c-2dc4-42ba-ba45-2d03718d2a68",
+   "name": "Check WA Creds",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const pid = $('Get Phone ID').first().json.config_value || '';\nconst token = $('Get Token').first().json.config_value || '';\nconst ver = $('Get API Ver').first().json.config_value || 'https://graph.facebook.com/v21.0';\nconst evoUrlRow = $('Get EVO URL').first().json || {};\nconst evoKeyRow = $('Get EVO API Key').first().json || {};\nconst evoInstRow = $('Get EVO Instance').first().json || {};\nconst evoUrl = (evoUrlRow.config_value || '').replace(/\\/+$/, '');\nconst evoKey = evoKeyRow.config_value || '';\nconst evoInst = evoInstRow.config_value || '';\nconst isSet = v => v && !v.startsWith('SET_');\nconst metaReady = isSet(pid) && isSet(token);\nconst evoReady = isSet(evoUrl) && isSet(evoKey) && isSet(evoInst);\nconst mode = evoReady ? 'evo' : (metaReady ? 'meta' : 'mock');\nconst t = $('Trigger').first().json;\nreturn [{ json: { ready: metaReady, evoReady, mode, pid, token, ver, evoUrl, evoKey, evoInst, phone: t.phone, message: t.message, template: t.template || 'GENERIC', related_id: t.related_id || t.phone } }];"
+   }
+  },
+  {
+   "id": "f7115967-25e2-4c05-8529-765904b493cc",
+   "name": "Send WhatsApp",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "onError": "continueRegularOutput",
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "method": "POST",
+    "url": "={{ $json.ver }}/{{ $json.pid }}/messages",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{ $('Check WA Creds').first().json.token }}"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', to: $('Check WA Creds').first().json.phone, type: 'text', text: { body: $('Check WA Creds').first().json.message } }) }}",
+    "options": {
+     "response": {
+      "response": {
+       "neverError": true
+      }
+     },
+     "timeout": 30000
+    }
+   }
+  },
+  {
+   "id": "f25ed84b-cf1b-4f0c-9908-ce0f75bdc822",
+   "name": "Update Sent Status",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const r = $json;\nconst waMsgId = (r.messages && r.messages[0] && r.messages[0].id) || (r.key && r.key.id) || '';\nconst err = r.error ? String(r.error.message || JSON.stringify(r.error)).slice(0, 500) : '';\nreturn [{ json: { waMsgId, err, phone: $('Check WA Creds').first().json.phone, related_id: $('Check WA Creds').first().json.related_id } }];"
+   }
+  },
+  {
+   "id": "df00bb0e-7e31-449c-97ba-81c52961ff7d",
+   "name": "Mark Log Sent",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "notifications_log"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "related_id",
+       "condition": "eq",
+       "keyValue": "={{ $json.related_id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "status": "SENT",
+      "error": "={{ $json.err }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   }
+  },
+  {
+   "id": "e2825282-f668-4955-8f0e-29c426e0f217",
+   "name": "Sent Output",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "return [{ json: { ok: true, mock: false, mode: $('Check WA Creds').first().json.mode, wa_message_id: $json.waMsgId, error: $json.err } }];"
+   }
+  },
+  {
+   "id": "13e900c2-021e-4bb8-a1c1-dfc61c55f4f4",
+   "name": "Mock Send",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const c = $('Check WA Creds').first().json;\nreturn [{ json: { ok: true, mock: true, phone: c.phone, message: c.message, related_id: c.related_id, note: 'Sender MOCK mode - koi credentials set nahi. Evolution (EVO_URL/EVO_API_KEY/EVO_INSTANCE) ya Meta (WHATSAPP_TOKEN/WHATSAPP_PHONE_NUMBER_ID) system_config mein daalte hi real WhatsApp send shuru ho jayega.' } }];"
+   }
+  },
+  {
+   "id": "fbf98e0f-c403-4832-a832-21ef5c8e1bef",
+   "name": "Mark Log Mock",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "notifications_log"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "related_id",
+       "condition": "eq",
+       "keyValue": "={{ $('Check WA Creds').first().json.related_id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "status": "MOCK_LOGGED",
+      "error": "credentials not set"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   }
+  },
+  {
+   "id": "906debfc-5fca-455d-af2a-57514eca39fb",
+   "name": "Mock Output",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ],
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nreturn [{ json: { ok: true, mock: true } }];"
+   }
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=EVO_URL"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "id": "evo-evo_url-node",
+   "name": "Get EVO URL",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    -200,
+    560
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=EVO_API_KEY"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "id": "evo-evo_api_key-node",
+   "name": "Get EVO API Key",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    -200,
+    700
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=EVO_INSTANCE"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "id": "evo-evo_instance-node",
+   "name": "Get EVO Instance",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    -200,
+    840
+   ]
+  },
+  {
+   "parameters": {
+    "rules": {
+     "values": [
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "r-evo",
+          "leftValue": "={{ $json.mode }}",
+          "rightValue": "evo",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "evo"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "r-meta",
+          "leftValue": "={{ $json.mode }}",
+          "rightValue": "meta",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "meta"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "r-mock",
+          "leftValue": "={{ $json.mode }}",
+          "rightValue": "mock",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "mock"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "id": "evo-send-mode-switch",
+   "name": "Send Mode",
+   "type": "n8n-nodes-base.switch",
+   "typeVersion": 3.2,
+   "position": [
+    560,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ $('Check WA Creds').first().json.evoUrl }}/message/sendText/{{ $('Check WA Creds').first().json.evoInst }}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "apikey",
+       "value": "={{ $('Check WA Creds').first().json.evoKey }}"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ number: $('Check WA Creds').first().json.phone.replace(/\\D/g, ''), text: $('Check WA Creds').first().json.message, linkPreview: false }) }}",
+    "options": {
+     "response": {
+      "response": {
+       "neverError": true
+      }
+     },
+     "timeout": 30000
+    }
+   },
+   "id": "evo-send-http-node",
+   "name": "Send Evolution",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    820,
+    160
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Log Notification",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Log Notification": {
+   "main": [
+    [
+     {
+      "node": "Get Phone ID",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Phone ID": {
+   "main": [
+    [
+     {
+      "node": "Get Token",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Token": {
+   "main": [
+    [
+     {
+      "node": "Get API Ver",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get API Ver": {
+   "main": [
+    [
+     {
+      "node": "Get EVO URL",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Check WA Creds": {
+   "main": [
+    [
+     {
+      "node": "Send Mode",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Send WhatsApp": {
+   "main": [
+    [
+     {
+      "node": "Update Sent Status",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Update Sent Status": {
+   "main": [
+    [
+     {
+      "node": "Mark Log Sent",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mark Log Sent": {
+   "main": [
+    [
+     {
+      "node": "Sent Output",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mock Send": {
+   "main": [
+    [
+     {
+      "node": "Mark Log Mock",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mark Log Mock": {
+   "main": [
+    [
+     {
+      "node": "Mock Output",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get EVO URL": {
+   "main": [
+    [
+     {
+      "node": "Get EVO API Key",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get EVO API Key": {
+   "main": [
+    [
+     {
+      "node": "Get EVO Instance",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get EVO Instance": {
+   "main": [
+    [
+     {
+      "node": "Check WA Creds",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Send Mode": {
+   "main": [
+    [
+     {
+      "node": "Send Evolution",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Send WhatsApp",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Mock Send",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Send Evolution": {
+   "main": [
+    [
+     {
+      "node": "Update Sent Status",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "nodeGroups": [],
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "staticData": null,
+ "pinData": {},
+ "meta": null,
+ "tags": [],
+ "shared": [
+  {
+   "role": "workflow:owner",
+   "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+   "projectId": "FJB8cJo77GVLhpDf",
+   "project": {
+    "id": "FJB8cJo77GVLhpDf",
+    "name": "CSC Admin <admin@csc.local>",
+    "type": "personal",
+    "icon": null,
+    "description": null,
+    "customTelemetryTags": [],
+    "creatorId": "61cda7cf-771d-49d1-bb85-76ede8a98932",
+    "createdAt": "2026-10-03T01:59:25.436Z",
+    "updatedAt": "2026-10-03T02:00:35.899Z"
+   },
+   "createdAt": "2026-10-03T02:04:37.851Z",
+   "updatedAt": "2026-10-03T02:04:37.851Z"
+  }
+ ],
+ "activeVersion": {
+  "versionId": "836ceeed-d8bf-441d-beaf-b6f4f10b3b91",
+  "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+  "nodes": [
+   {
+    "id": "b11fa3cf-531b-4a94-9ec5-f018047e4c84",
+    "name": "Trigger",
+    "type": "n8n-nodes-base.executeWorkflowTrigger",
+    "typeVersion": 1.1,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "inputSource": "passthrough"
+    }
+   },
+   {
+    "id": "a745aacc-5142-4dc8-a40c-843436e99195",
+    "name": "Log Notification",
+    "type": "n8n-nodes-base.dataTable",
+    "typeVersion": 1.1,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "resource": "row",
+     "operation": "insert",
+     "dataTableId": {
+      "__rl": true,
+      "mode": "name",
+      "value": "notifications_log"
+     },
+     "columns": {
+      "mappingMode": "defineBelow",
+      "value": {
+       "phone": "={{ $json.phone }}",
+       "template": "={{ $json.template || 'GENERIC' }}",
+       "message": "={{ ($json.message || '').slice(0, 2000) }}",
+       "status": "QUEUED",
+       "related_id": "={{ $json.related_id || $json.phone }}",
+       "error": "",
+       "created_at": "={{ $now.toISO() }}"
+      },
+      "matchingColumns": [],
+      "schema": [],
+      "attemptToConvertTypes": false,
+      "convertFieldsToString": false
+     }
+    }
+   },
+   {
+    "id": "8b088d1c-1cad-46b4-bc42-3068990d9f53",
+    "name": "Get Phone ID",
+    "type": "n8n-nodes-base.dataTable",
+    "typeVersion": 1.1,
+    "alwaysOutputData": true,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "resource": "row",
+     "operation": "get",
+     "dataTableId": {
+      "__rl": true,
+      "mode": "name",
+      "value": "system_config"
+     },
+     "matchType": "allConditions",
+     "filters": {
+      "conditions": [
+       {
+        "keyName": "config_key",
+        "condition": "eq",
+        "keyValue": "=WHATSAPP_PHONE_NUMBER_ID"
+       }
+      ]
+     },
+     "returnAll": false,
+     "limit": 1
+    }
+   },
+   {
+    "id": "14c5163e-32ba-4161-8ba6-6659486527af",
+    "name": "Get Token",
+    "type": "n8n-nodes-base.dataTable",
+    "typeVersion": 1.1,
+    "alwaysOutputData": true,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "resource": "row",
+     "operation": "get",
+     "dataTableId": {
+      "__rl": true,
+      "mode": "name",
+      "value": "system_config"
+     },
+     "matchType": "allConditions",
+     "filters": {
+      "conditions": [
+       {
+        "keyName": "config_key",
+        "condition": "eq",
+        "keyValue": "=WHATSAPP_ACCESS_TOKEN"
+       }
+      ]
+     },
+     "returnAll": false,
+     "limit": 1
+    }
+   },
+   {
+    "id": "c899a5eb-db2b-4a98-a652-8fb645966dd4",
+    "name": "Get API Ver",
+    "type": "n8n-nodes-base.dataTable",
+    "typeVersion": 1.1,
+    "alwaysOutputData": true,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "resource": "row",
+     "operation": "get",
+     "dataTableId": {
+      "__rl": true,
+      "mode": "name",
+      "value": "system_config"
+     },
+     "matchType": "allConditions",
+     "filters": {
+      "conditions": [
+       {
+        "keyName": "config_key",
+        "condition": "eq",
+        "keyValue": "=WHATSAPP_API_BASE"
+       }
+      ]
+     },
+     "returnAll": false,
+     "limit": 1
+    }
+   },
+   {
+    "id": "11b94b3c-2dc4-42ba-ba45-2d03718d2a68",
+    "name": "Check WA Creds",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "mode": "runOnceForAllItems",
+     "jsCode": "\nconst pid = $('Get Phone ID').first().json.config_value || '';\nconst token = $('Get Token').first().json.config_value || '';\nconst ver = $('Get API Ver').first().json.config_value || 'https://graph.facebook.com/v21.0';\nconst t = $('Trigger').first().json;\nconst ready = pid && token && !pid.startsWith('SET_') && !token.startsWith('SET_');\nreturn [{ json: { ready, pid, token, ver, phone: t.phone, message: t.message, template: t.template || 'GENERIC', related_id: t.related_id || t.phone } }];"
+    }
+   },
+   {
+    "id": "82058fa2-8aea-4955-b54c-696e20a69140",
+    "name": "Creds Ready?",
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.2,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "conditions": {
+      "options": {
+       "caseSensitive": true,
+       "leftValue": "",
+       "typeValidation": "loose",
+       "version": 2
+      },
+      "conditions": [
+       {
+        "id": "c0-CredsReady",
+        "leftValue": "={{ $json.ready }}",
+        "rightValue": "true",
+        "operator": {
+         "type": "string",
+         "operation": "equals"
+        }
+       }
+      ],
+      "combinator": "and"
+     },
+     "options": {}
+    }
+   },
+   {
+    "id": "f7115967-25e2-4c05-8529-765904b493cc",
+    "name": "Send WhatsApp",
+    "type": "n8n-nodes-base.httpRequest",
+    "typeVersion": 4.2,
+    "onError": "continueRegularOutput",
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "method": "POST",
+     "url": "={{ $json.ver }}/{{ $json.pid }}/messages",
+     "sendHeaders": true,
+     "headerParameters": {
+      "parameters": [
+       {
+        "name": "Authorization",
+        "value": "=Bearer {{ $('Check WA Creds').first().json.token }}"
+       },
+       {
+        "name": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     },
+     "sendBody": true,
+     "specifyBody": "json",
+     "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', to: $('Check WA Creds').first().json.phone, type: 'text', text: { body: $('Check WA Creds').first().json.message } }) }}",
+     "options": {
+      "response": {
+       "response": {
+        "neverError": true
+       }
+      },
+      "timeout": 30000
+     }
+    }
+   },
+   {
+    "id": "f25ed84b-cf1b-4f0c-9908-ce0f75bdc822",
+    "name": "Update Sent Status",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "mode": "runOnceForAllItems",
+     "jsCode": "\nconst r = $json;\nconst waMsgId = r.messages && r.messages[0] && r.messages[0].id || '';\nconst err = r.error ? String(r.error.message || JSON.stringify(r.error)).slice(0, 500) : '';\nreturn [{ json: { waMsgId, err, phone: $('Check WA Creds').first().json.phone, related_id: $('Check WA Creds').first().json.related_id } }];"
+    }
+   },
+   {
+    "id": "df00bb0e-7e31-449c-97ba-81c52961ff7d",
+    "name": "Mark Log Sent",
+    "type": "n8n-nodes-base.dataTable",
+    "typeVersion": 1.1,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "resource": "row",
+     "operation": "update",
+     "dataTableId": {
+      "__rl": true,
+      "mode": "name",
+      "value": "notifications_log"
+     },
+     "matchType": "allConditions",
+     "filters": {
+      "conditions": [
+       {
+        "keyName": "related_id",
+        "condition": "eq",
+        "keyValue": "={{ $json.related_id }}"
+       }
+      ]
+     },
+     "columns": {
+      "mappingMode": "defineBelow",
+      "value": {
+       "status": "SENT",
+       "error": "={{ $json.err }}"
+      },
+      "matchingColumns": [],
+      "schema": [],
+      "attemptToConvertTypes": false,
+      "convertFieldsToString": false
+     }
+    }
+   },
+   {
+    "id": "e2825282-f668-4955-8f0e-29c426e0f217",
+    "name": "Sent Output",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "mode": "runOnceForAllItems",
+     "jsCode": "\nreturn [{ json: { ok: true, mock: false, wa_message_id: $json.waMsgId, error: $json.err } }];"
+    }
+   },
+   {
+    "id": "13e900c2-021e-4bb8-a1c1-dfc61c55f4f4",
+    "name": "Mock Send",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "mode": "runOnceForAllItems",
+     "jsCode": "\nconst c = $('Check WA Creds').first().json;\nreturn [{ json: { ok: true, mock: true, phone: c.phone, message: c.message, related_id: c.related_id, note: 'WhatsApp credentials set nahi hain - message log only. Meta token set karte hi real send hoga.' } }];"
+    }
+   },
+   {
+    "id": "fbf98e0f-c403-4832-a832-21ef5c8e1bef",
+    "name": "Mark Log Mock",
+    "type": "n8n-nodes-base.dataTable",
+    "typeVersion": 1.1,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "resource": "row",
+     "operation": "update",
+     "dataTableId": {
+      "__rl": true,
+      "mode": "name",
+      "value": "notifications_log"
+     },
+     "matchType": "allConditions",
+     "filters": {
+      "conditions": [
+       {
+        "keyName": "related_id",
+        "condition": "eq",
+        "keyValue": "={{ $('Check WA Creds').first().json.related_id }}"
+       }
+      ]
+     },
+     "columns": {
+      "mappingMode": "defineBelow",
+      "value": {
+       "status": "MOCK_LOGGED",
+       "error": "credentials not set"
+      },
+      "matchingColumns": [],
+      "schema": [],
+      "attemptToConvertTypes": false,
+      "convertFieldsToString": false
+     }
+    }
+   },
+   {
+    "id": "906debfc-5fca-455d-af2a-57514eca39fb",
+    "name": "Mock Output",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+     0,
+     0
+    ],
+    "parameters": {
+     "mode": "runOnceForAllItems",
+     "jsCode": "\nreturn [{ json: { ok: true, mock: true } }];"
+    }
+   }
+  ],
+  "connections": {
+   "Trigger": {
+    "main": [
+     [
+      {
+       "node": "Log Notification",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Log Notification": {
+    "main": [
+     [
+      {
+       "node": "Get Phone ID",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Get Phone ID": {
+    "main": [
+     [
+      {
+       "node": "Get Token",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Get Token": {
+    "main": [
+     [
+      {
+       "node": "Get API Ver",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Get API Ver": {
+    "main": [
+     [
+      {
+       "node": "Check WA Creds",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Check WA Creds": {
+    "main": [
+     [
+      {
+       "node": "Creds Ready?",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Creds Ready?": {
+    "main": [
+     [
+      {
+       "node": "Send WhatsApp",
+       "type": "main",
+       "index": 0
+      }
+     ],
+     [
+      {
+       "node": "Mock Send",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Send WhatsApp": {
+    "main": [
+     [
+      {
+       "node": "Update Sent Status",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Update Sent Status": {
+    "main": [
+     [
+      {
+       "node": "Mark Log Sent",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Mark Log Sent": {
+    "main": [
+     [
+      {
+       "node": "Sent Output",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Mock Send": {
+    "main": [
+     [
+      {
+       "node": "Mark Log Mock",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   },
+   "Mark Log Mock": {
+    "main": [
+     [
+      {
+       "node": "Mock Output",
+       "type": "main",
+       "index": 0
+      }
+     ]
+    ]
+   }
+  },
+  "nodeGroups": [],
+  "authors": "import",
+  "name": null,
+  "description": null,
+  "autosaved": false,
+  "createdAt": "2026-10-03T02:04:37.879Z",
+  "updatedAt": "2026-10-03T02:04:37.879Z",
+  "workflowPublishHistory": [
+   {
+    "id": 9,
+    "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+    "versionId": "836ceeed-d8bf-441d-beaf-b6f4f10b3b91",
+    "event": "activated",
+    "userId": "61cda7cf-771d-49d1-bb85-76ede8a98932",
+    "createdAt": "2026-10-03T02:11:57.920Z"
+   },
+   {
+    "id": 39,
+    "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+    "versionId": "836ceeed-d8bf-441d-beaf-b6f4f10b3b91",
+    "event": "activated",
+    "userId": "61cda7cf-771d-49d1-bb85-76ede8a98932",
+    "createdAt": "2026-10-03T02:12:39.408Z"
+   },
+   {
+    "id": 38,
+    "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+    "versionId": "836ceeed-d8bf-441d-beaf-b6f4f10b3b91",
+    "event": "deactivated",
+    "userId": "61cda7cf-771d-49d1-bb85-76ede8a98932",
+    "createdAt": "2026-10-03T02:12:39.407Z"
+   }
+  ]
+ }
+}

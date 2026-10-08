@@ -1,0 +1,285 @@
+{
+ "id": "3c5c2323-0000-4000-8000-000000000023",
+ "name": "CSC 23 - Admin Dashboard (Stats API + Daily Digest)",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "GET",
+    "path": "csc-admin",
+    "responseMode": "responseNode",
+    "options": {}
+   },
+   "name": "Admin API",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "webhookId": "whk-cscadmin-get",
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "cronExpression",
+       "expression": "0 20 * * *"
+      }
+     ]
+    }
+   },
+   "name": "Daily Digest 8PM",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "customer_phone",
+       "condition": "neq",
+       "keyValue": "___none___"
+      }
+     ]
+    },
+    "returnAll": true
+   },
+   "name": "All Apps",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "payments"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "status",
+       "condition": "eq",
+       "keyValue": "=PAID"
+      }
+     ]
+    },
+    "returnAll": true
+   },
+   "name": "All Payments",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "returnAll": true,
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nlet apps = [], pays = [];\ntry { const _tmpA = $('All Apps').all().map(i => i.json).filter(a => a && a.application_id); const _seenA = new Set(); apps = _tmpA.filter(a => !_seenA.has(a.application_id) && _seenA.add(a.application_id)); } catch (e) {}\ntry { const _tmpP = $('All Payments').all().map(i => i.json).filter(p => p && p.payment_id); const _seenP = new Set(); pays = _tmpP.filter(p => !_seenP.has(p.payment_id) && _seenP.add(p.payment_id)); } catch (e) {}\nconst byStatus = {};\nfor (const a of apps) byStatus[a.status] = (byStatus[a.status] || 0) + 1;\nconst today = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);\nconst todayApps = apps.filter(a => String(a.created_at || '').slice(0, 10) === today).length;\nconst revenue = pays.reduce((s, p) => s + Number(p.amount || 0), 0);\nconst todayRevenue = pays.filter(p => String(p.paid_at || '').slice(0, 10) === today).reduce((s, p) => s + Number(p.amount || 0), 0);\nconst stats = { total_applications: apps.length, today_applications: todayApps, by_status: byStatus, total_revenue: revenue, today_revenue: todayRevenue, generated_at: new Date().toISOString() };\nreturn [{ json: { stats, mode: 'aggregate' } }];"
+   },
+   "name": "Aggregate Stats",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify($json.stats) }}"
+   },
+   "name": "Respond Stats",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst s = $json.stats;\nlet msg = '📊 *CSC Daily Digest* (' + new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10) + ')\\n\\n';\nmsg += '📋 Total applications: ' + s.total_applications + '\\n';\nmsg += '🌟 Aaj ke applications: ' + s.today_applications + '\\n';\nmsg += '💰 Aaj ki revenue: Rs ' + s.today_revenue + '\\n';\nmsg += '💰 Total revenue: Rs ' + s.total_revenue + '\\n\\n';\nmsg += 'Status breakdown:\\n';\nfor (const [k, v] of Object.entries(s.by_status || {})) msg += '  ' + k + ': ' + v + '\\n';\nreturn [{ json: { phone: 'ADMIN', message: msg, template: 'DAILY_DIGEST', related_id: 'digest' } }];"
+   },
+   "name": "Build Digest",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=ADMIN_WHATSAPP_NUMBER"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Admin4",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "action": "send_whatsapp",
+      "phone": "={{ $json.config_value || '' }}",
+      "message": "={{ $('Build Digest').first().json.message }}",
+      "template": "DAILY_DIGEST",
+      "related_id": "digest"
+     }
+    }
+   },
+   "name": "Send Digest",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Admin API": {
+   "main": [
+    [
+     {
+      "node": "All Apps",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "All Apps": {
+   "main": [
+    [
+     {
+      "node": "All Payments",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "All Payments": {
+   "main": [
+    [
+     {
+      "node": "Aggregate Stats",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Aggregate Stats": {
+   "main": [
+    [
+     {
+      "node": "Respond Stats",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Build Digest",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Build Digest": {
+   "main": [
+    [
+     {
+      "node": "Get Admin4",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Admin4": {
+   "main": [
+    [
+     {
+      "node": "Send Digest",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Daily Digest 8PM": {
+   "main": [
+    [
+     {
+      "node": "All Apps",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --c-bg: #f1f0ef;
+    --c-accent: #87702a;
+    --c-text: #1c1c1a;
+    --c-muted: #78766f;
+    --c-mid: #504933;
+    --c-surface: #e8e7e4;
+  }
+  html, body {
+    margin: 0; padding: 0;
+    width: 794px; height: 1123px;
+    background: var(--c-bg);
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  }
+  @page { size: 794px 1123px; margin: 0; }
+  .cover {
+    position: relative;
+    width: 794px; height: 1123px;
+    border: none; outline: none; box-shadow: none;
+  }
+  /* Layer 1: background grid (clipped) */
+  .layer-1 {
+    position: absolute; inset: 0;
+    overflow: hidden;
+    z-index: 1;
+    background-image:
+      linear-gradient(rgba(80, 73, 51, 0.05) 0.5px, transparent 0.5px),
+      linear-gradient(90deg, rgba(80, 73, 51, 0.05) 0.5px, transparent 0.5px);
+    background-size: 66px 66px;
+  }
+  /* Layer 2: structure - ultra-thick vertical anchor line */
+  .layer-2 { position: absolute; inset: 0; z-index: 2; }
+  .anchor-line {
+    position: absolute;
+    left: 95px;
+    top: 112px;
+    width: 8px;
+    height: 899px;
+    background: var(--c-accent);
+  }
+  /* Layer 3: content */
+  .layer-3 { position: absolute; inset: 0; z-index: 3; }
+  .kicker {
+    position: absolute;
+    left: 175px; top: 168px;
+    font-size: 16pt; font-weight: 400;
+    letter-spacing: 4pt;
+    text-transform: uppercase;
+    color: var(--c-text);
+    opacity: 0.6;
+  }
+  .hero-1 {
+    position: absolute;
+    left: 175px; top: 300px;
+    max-width: 560px;
+    font-size: 52pt; font-weight: 900;
+    line-height: 1.15;
+    color: var(--c-text);
+    letter-spacing: -1pt;
+  }
+  .hero-2 {
+    position: absolute;
+    left: 175px; top: 388px;
+    max-width: 560px;
+    font-size: 52pt; font-weight: 900;
+    line-height: 1.15;
+    color: var(--c-accent);
+    letter-spacing: -1pt;
+  }
+  .summary {
+    position: absolute;
+    left: 175px; top: 562px;
+    max-width: 476px;
+    font-size: 16.5pt; font-weight: 300;
+    line-height: 1.6;
+    color: var(--c-text);
+    opacity: 0.85;
+  }
+  .meta {
+    position: absolute;
+    left: 175px; top: 842px;
+    font-size: 17pt; font-weight: 600;
+    color: var(--c-mid);
+    line-height: 1.7;
+  }
+  .meta .sub {
+    font-size: 15pt; font-weight: 400;
+    color: var(--c-muted);
+  }
+  .footer {
+    position: absolute;
+    left: 175px; top: 1010px;
+    font-size: 13pt; font-weight: 400;
+    letter-spacing: 2pt;
+    text-transform: uppercase;
+    color: var(--c-muted);
+  }
+  @media screen {
+    html { background: #9a988f; }
+    body { transform-origin: top left; }
+  }
+</style>
+</head>
+<body>
+<div class="cover">
+  <div class="layer-1"></div>
+  <div class="layer-2">
+    <div class="anchor-line"></div>
+  </div>
+  <div class="layer-3">
+    <div class="kicker">Go-Live Deployment Guide</div>
+    <div class="hero-1">CSC Smart Seva</div>
+    <div class="hero-2">Launch Kit</div>
+    <div class="summary">
+      WhatsApp seva kendra ko production mein lagaane ka complete
+      roadmap - server setup se lekar WhatsApp production, live payments
+      aur admin portal deployment tak, step-by-step.
+    </div>
+    <div class="meta">
+      Version 1.0 &middot; September 2026<br>
+      <span class="sub">25 n8n workflows &middot; 16 services &middot; Admin Portal &middot; Supabase</span>
+    </div>
+    <div class="footer">CSC Smart Seva Systems</div>
+  </div>
+</div>
+</body>
+</html>

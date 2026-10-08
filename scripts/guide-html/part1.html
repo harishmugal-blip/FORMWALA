@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CSC Smart Seva - Services Operator Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+@page { size: 720px 1020px; margin: 0; }
+:root{
+  --c-navy:#1a365d;
+  --c-mid:#2a5298;
+  --c-light:#4a7ac7;
+  --c-block:#dce6f5;
+  --c-bg:#f5f8fc;
+  --c-text:#24303f;
+  --c-muted:#5d6b7e;
+  --c-border:#d7dfe9;
+}
+html,body{
+  margin:0; padding:0; width:720px;
+  background:#1a365d;
+  color:var(--c-text);
+  font-family:'Inter', 'Liberation Sans', sans-serif;
+  font-size:15px; line-height:1.62;
+  overflow-wrap:break-word; word-break:normal; hyphens:auto;
+}
+@media screen{
+  html{ height:auto; display:flex; justify-content:center; background:#0f2440; }
+  body{ transform-origin:top center; margin:20px auto; box-shadow:0 8px 40px rgba(0,0,0,.4); }
+}
+p,td,li{ overflow-wrap:break-word; }
+
+/* ============ COVER ============ */
+.cover{
+  width:720px; height:1020px; box-sizing:border-box;
+  break-after:page; overflow:hidden;
+  background:linear-gradient(160deg,#1a365d 0%,#204374 55%,#2a5298 100%);
+  color:#fff; position:relative;
+  display:flex; flex-direction:column; justify-content:center;
+  padding:64px;
+}
+.cover .deco-ring{
+  position:absolute; border-radius:50%; border:1.5px solid rgba(255,255,255,.14);
+}
+.cover .ring-a{ width:340px; height:340px; top:-120px; right:-110px; }
+.cover .ring-b{ width:220px; height:220px; top:40px; right:120px; border-color:rgba(255,255,255,.08); }
+.cover .ring-c{ width:180px; height:180px; bottom:-60px; left:-50px; border-color:rgba(255,255,255,.10); }
+.cover .grid-dots{
+  position:absolute; left:64px; bottom:170px; width:150px; height:60px;
+  background-image:radial-gradient(rgba(255,255,255,.22) 1.5px, transparent 1.5px);
+  background-size:15px 15px;
+}
+.cover-badge{
+  display:inline-block; align-self:flex-start;
+  border:1px solid rgba(255,255,255,.45); border-radius:999px;
+  padding:7px 18px; font-size:12px; letter-spacing:3.5px; font-weight:600;
+  text-transform:uppercase; margin-bottom:34px;
+}
+.cover-kicker{ font-size:13px; letter-spacing:2px; color:#a9c3e8; font-weight:600; text-transform:uppercase; margin-bottom:14px; }
+.cover-title{ font-size:56px; font-weight:900; line-height:1.04; letter-spacing:-1px; }
+.cover-title .thin{ font-weight:300; display:block; font-size:34px; letter-spacing:0; margin-top:10px; color:#dce6f5; }
+.cover-sub{
+  margin-top:26px; font-size:15.5px; line-height:1.7; color:#c9d8ef; max-width:470px; font-weight:400;
+}
+.cover-stats{ display:flex; flex-wrap:wrap; gap:14px; margin-top:40px; max-width:520px; }
+.cover-stat{
+  flex:1 1 100px; min-width:100px; max-width:118px;
+  border:1px solid rgba(255,255,255,.22); border-radius:12px;
+  padding:16px 18px; background:rgba(255,255,255,.05);
+}
+.cover-stat .n{ font-size:26px; font-weight:800; }
+.cover-stat .l{ font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#a9c3e8; margin-top:3px; }
+.cover-edition{
+  position:absolute; left:64px; right:64px; bottom:56px;
+  display:flex; justify-content:space-between; align-items:center;
+  border-top:1px solid rgba(255,255,255,.25); padding-top:18px;
+  font-size:12px; letter-spacing:2px; color:#a9c3e8; text-transform:uppercase; font-weight:500;
+}
+
+/* ============ FLOW CONTENT ============ */
+.main-content{
+  background:var(--c-bg);
+  padding:58px 60px 44px 60px;
+}
+.section-tag{
+  display:inline-block; background:var(--c-mid); color:#fff;
+  font-size:10.5px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase;
+  padding:5px 14px; border-radius:999px;
+}
+.section-title{ font-size:26px; font-weight:800; color:var(--c-navy); margin:12px 0 4px; letter-spacing:-.3px; line-height:1.22; }
+.divider{ height:3px; width:64px; background:var(--c-light); border-radius:2px; margin:10px 0 18px; }
+.body-text{ margin:0 0 12px; color:var(--c-text); }
+.body-text b, .card b, td b{ color:var(--c-navy); }
+.lead{ font-size:15.5px; }
+
+.chapter-header{ break-after:avoid; break-inside:avoid; margin-top:28px; }
+.card{ break-inside:avoid; margin-bottom:14px; }
+
+/* golden rules */
+.rule-card{
+  background:#fff; border:1px solid var(--c-border); border-left:4px solid var(--c-mid);
+  border-radius:10px; padding:14px 18px; margin-bottom:12px;
+  break-inside:avoid;
+}
+.rule-card .rn{ font-size:11px; font-weight:800; letter-spacing:2px; color:var(--c-mid); text-transform:uppercase; }
+.rule-card .rt{ font-size:15px; font-weight:700; color:var(--c-navy); margin:2px 0 4px; }
+.rule-card .rd{ font-size:13.5px; color:var(--c-muted); line-height:1.55; }
+
+/* service header */
+.svc-top{ display:flex; flex-wrap:wrap; align-items:flex-start; gap:14px; max-width:100%; }
+.svc-num{
+  flex:0 0 auto; min-width:52px; max-width:100%;
+  background:var(--c-navy); color:#fff; font-weight:800; font-size:20px;
+  border-radius:12px; padding:12px 14px; text-align:center; letter-spacing:1px;
+}
+.svc-titles{ flex:1 1 auto; min-width:200px; }
+.svc-name{ font-size:23px; font-weight:800; color:var(--c-navy); line-height:1.15; }
+.svc-cat{ font-size:12px; color:var(--c-muted); letter-spacing:1.2px; text-transform:uppercase; font-weight:600; margin-top:4px; }
+.svc-fee{ flex:0 0 auto; text-align:right; background:var(--c-block); border-radius:12px; padding:10px 16px; }
+.svc-fee .fee-amount{ font-size:20px; font-weight:800; color:var(--c-navy); }
+.svc-fee .fee-label{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--c-mid); font-weight:700; }
+
+/* meta chips */
+.meta-row{ display:flex; flex-wrap:wrap; gap:10px; margin:14px 0 16px; max-width:100%; }
+.meta-chip{
+  flex:1 1 180px; min-width:160px; max-width:100%;
+  background:#fff; border:1px solid var(--c-border); border-radius:10px; padding:10px 14px;
+  break-inside:avoid;
+}
+.meta-chip .mk{ display:block; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--c-mid); font-weight:700; margin-bottom:3px; }
+.meta-chip .mv{ font-size:13.5px; color:var(--c-text); font-weight:500; line-height:1.45; }
+
+/* section sub-headers */
+h3.sub{
+  font-size:15.5px; font-weight:800; color:var(--c-navy); margin:18px 0 8px;
+  break-after:avoid; letter-spacing:-.1px;
+}
+h3.sub .idx{ color:var(--c-light); font-weight:800; margin-right:6px; }
+
+/* tables */
+table{ width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--c-border); border-radius:10px; overflow:hidden; font-size:12.5px; }
+thead{ display:table-header-group; }
+tr{ break-inside:avoid; }
+th{ background:var(--c-block); color:var(--c-navy); text-align:left; font-weight:700; padding:8px 12px; font-size:11px; letter-spacing:1px; text-transform:uppercase; }
+td{ padding:7px 12px; border-top:1px solid var(--c-border); vertical-align:top; line-height:1.5; }
+tbody tr:nth-child(odd) td{ background:#f2f6fb; }
+table, .table-wrap{ break-inside:auto; }
+
+/* doc chips */
+.doc-chips{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 4px; max-width:100%; }
+.doc-chip{
+  flex:0 1 auto; min-width:80px; max-width:100%;
+  background:#fff; border:1.5px solid var(--c-light); color:var(--c-navy);
+  border-radius:999px; padding:6px 15px; font-size:12.5px; font-weight:600;
+  overflow-wrap:break-word;
+}
+.doc-chip .opt{ color:var(--c-muted); font-weight:500; }
+
+/* steps */
+ol.steps{ margin:8px 0 6px; padding-left:0; list-style:none; counter-reset:step; }
+ol.steps li{
+  counter-increment:step; position:relative; padding:0 0 10px 42px;
+  break-inside:avoid; line-height:1.55; font-size:13.5px; color:var(--c-text);
+}
+ol.steps li::before{
+  content:counter(step); position:absolute; left:0; top:0;
+  width:28px; height:28px; border-radius:50%;
+  background:var(--c-mid); color:#fff; font-weight:700; font-size:13px;
+  display:flex; align-items:center; justify-content:center;
+}
+ol.steps li b{ color:var(--c-navy); }
+
+/* sahi-tarike knowledge box */
+.know{
+  background:#fff; border:1px solid var(--c-border); border-left:4px solid var(--c-navy);
+  border-radius:12px; padding:14px 18px; break-inside:avoid; margin:10px 0 6px;
+}
+.know .kt{ font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--c-navy); margin-bottom:6px; }
+.know ul{ margin:0; padding-left:18px; font-size:13px; color:var(--c-text); }
+.know li{ margin-bottom:5px; line-height:1.5; break-inside:avoid; }
+.know li b{ color:var(--c-navy); }
+
+/* tips box */
+.tips{
+  background:var(--c-block); border-radius:12px; padding:14px 18px;
+  break-inside:avoid; margin:12px 0 6px; border-left:4px solid var(--c-light);
+}
+.tips .tt{ font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--c-mid); margin-bottom:6px; }
+.tips ul{ margin:0; padding-left:18px; font-size:13px; color:var(--c-text); }
+.tips li{ margin-bottom:5px; line-height:1.5; break-inside:avoid; }
+
+/* portal box */
+.portal-box{
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+  background:#fff; border:1px dashed var(--c-light); border-radius:10px;
+  padding:10px 16px; margin:6px 0; break-inside:avoid; max-width:100%;
+}
+.portal-box .pk{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--c-mid); font-weight:700; }
+.portal-box .pv{ font-size:12.5px; font-weight:600; color:var(--c-navy); font-family:'Liberation Mono', monospace; overflow-wrap:anywhere; }
+
+/* quick reference table */
+.qref th:first-child{ width:34px; }
+
+/* ============ ENDING ============ */
+.ending{
+  width:720px; height:1020px; box-sizing:border-box;
+  break-before:page; overflow:hidden; position:relative;
+  background:linear-gradient(200deg,#2a5298 0%,#1a365d 60%,#12294a 100%);
+  color:#fff; display:flex; flex-direction:column; justify-content:center; padding:64px;
+}
+.ending .deco-ring{ position:absolute; border-radius:50%; border:1.5px solid rgba(255,255,255,.12); }
+.ending .ring-a{ width:300px; height:300px; bottom:-100px; right:-90px; }
+.ending .big-text{ font-size:40px; font-weight:900; line-height:1.15; letter-spacing:-.5px; }
+.ending .big-text .thin{ font-weight:300; color:#c9d8ef; }
+.ending .sub-line{ font-size:14.5px; color:#a9c3e8; margin-top:18px; line-height:1.75; max-width:460px; }
+.ending .cmd-card{
+  margin-top:34px; border:1px solid rgba(255,255,255,.25); border-radius:14px;
+  background:rgba(255,255,255,.06); padding:22px 26px; max-width:480px;
+}
+.ending .cmd-title{ font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#a9c3e8; font-weight:700; margin-bottom:12px; }
+.ending .cmd-row{ display:flex; gap:12px; margin-bottom:9px; align-items:baseline; }
+.ending .cmd-key{
+  flex:0 0 84px; font-family:'Liberation Mono', monospace; font-size:12.5px; font-weight:700;
+  background:rgba(255,255,255,.14); border-radius:6px; padding:4px 10px; text-align:center;
+}
+.ending .cmd-desc{ font-size:13px; color:#dce6f5; }
+.ending .edition{
+  position:absolute; left:64px; right:64px; bottom:56px;
+  border-top:1px solid rgba(255,255,255,.25); padding-top:18px;
+  display:flex; justify-content:space-between; font-size:11.5px; letter-spacing:2px; color:#a9c3e8; text-transform:uppercase;
+}
+</style>
+</head>
+<body>
+
+<!-- ================= COVER ================= -->
+<div class="cover">
+  <div class="deco-ring ring-a"></div>
+  <div class="deco-ring ring-b"></div>
+  <div class="deco-ring ring-c"></div>
+  <div class="grid-dots"></div>
+
+  <div class="cover-badge">Operator Manual</div>
+  <div class="cover-kicker">CSC Smart Seva</div>
+  <div class="cover-title">
+    Services Guide
+    <span class="thin">16 government services, step-by-step operator reference</span>
+  </div>
+  <div class="cover-sub">
+    Har service ka pura process — customer se kaunse fields aur documents collect honge,
+    portal par banane ke steps, fees ka breakdown, processing time aur common rejection
+    reasons. WhatsApp automation aur operator ka manual kaam, dono ek guide me.
+  </div>
+  <div class="cover-stats">
+    <div class="cover-stat"><div class="n">16</div><div class="l">Services</div></div>
+    <div class="cover-stat"><div class="n">99</div><div class="l">WhatsApp Fields</div></div>
+    <div class="cover-stat"><div class="n">54</div><div class="l">Documents</div></div>
+    <div class="cover-stat"><div class="n">11</div><div class="l">Portals</div></div>
+  </div>
+
+  <div class="cover-edition">
+    <span>Version 3.0 - Video Verified</span>
+    <span>September 2026</span>
+  </div>
+</div>
+
+<!-- ================= MAIN CONTENT ================= -->
+<div class="main-content">
+
+  <!-- ========== SECTION 1: INTRO ========== -->
+  <div class="chapter-header">
+    <div class="section-tag">Section 1</div>
+    <div class="section-title">Guide Kaise Use Karein</div>
+    <div class="divider"></div>
+  </div>
+
+  <p class="body-text lead">
+    Ye guide <b>CSC Smart Seva</b> system ka operator manual hai. System customer se WhatsApp
+    par hi pura kaam leta hai — service pata karna, fields bharna, documents lena aur payment
+    lena. Uske baad government portal par form bharna, OTP/CAPTCHA dalna aur submit karna
+    <b>aapka (operator ka) manual kaam</b> hai. Har service ke section me ye 7 cheezein milengi:
+    service ka description, eligibility, system me configured fields, documents list, portal
+    par step-by-step process, <b>"Sahi Tarike" box</b> (asli process ke facts — SarkariDNA
+    video walkthroughs aur official portals se verify kiye hue), aur operator tips jo rejection
+    se bachate hain.
+  </p>
+
+  <p class="body-text">
+    Is edition (V3.0) me <b>9 step-by-step video walkthroughs</b> ka knowledge seedha guide me
+    merge kiya gaya hai — PAN card (Protean portal), Aay/Jati/Niwas Praman Patra (e-District),
+    Ration Card (Smart PDS 2.0), GST registration aur GSTR-1/3B filing, ITR filing (AY 2026-27
+    ke naye rules) aur Passport apply. Har covered service ke "Sahi Tarike" box me video ka
+    link bhi diya gaya hai — customer ke sawal ka jawab video ke timestamp ke saath check kar
+    sakte ho. Videos dekhne ke liye Quick Reference ke baad wali <b>Video Guide References</b>
+    table use karo.
+  </p>
+
+  <p class="body-text">
+    Knowledge verification ka source: <b>SarkariDNA YouTube channel</b> (youtube.com/@SarkariDNA)
+    ke sarkari services guide videos — is guide me 9 videos ka process seedha verify karke dala
+    gaya hai (PAN, Aay, Jati, Niwas, Ration Card, GST Reg, GST Filing, ITR, Passport) — plus
+    official portals (onlineservices.nsdl.com, incometax.gov.in, gst.gov.in, nfsa.gov.in,
+    passportindia.gov.in, voters.eci.gov.in, beneficiary.nha.gov.in, register.eshram.gov.in,
+    scholarships.gov.in). Isliye jo tareeka is guide me likha hai, wahi portal par asli me
+    chalta hai.
+  </p>
+
+  <p class="body-text">
+    System ka flow simple hai. Customer WhatsApp par message bhejta hai (jaise "pan card banana
+    hai") — AI engine service pehchan leta hai aur fee bata deta hai. Customer CONFIRM karte hi
+    ek-ek karke sawal aate hain, jisme galat jawab turant reject ho jata hai (jaise 12 digit
+    Aadhaar, 10 digit mobile check). Documents photo/PDF me aate hain aur pricing ke baad UPI
+    payment link jata hai. Payment webhook se verify hote hi application number banta hai
+    (CSC-2026-XXXXXX) aur aapke operator WhatsApp par task aata hai. Aap portal par kaam
+    complete karke <b>DONE</b> command se mark karte hain — customer ko confirmation chali jati hai.
+  </p>
+
+  <h3 class="sub"><span class="idx">1.1</span>5 Golden Rules — Ye Kabhi Na Todein</h3>
+
+  <div class="rule-card">
+    <div class="rn">Rule 01</div>
+    <div class="rt">OTP aur CAPTCHA hamesha customer ke saath</div>
+    <div class="rd">Kisi bhi service ka OTP, CAPTCHA ya password automate nahi karte. Portal par
+    OTP customer ke Aadhaar-linked mobile par hi aayega — wo khud dekh kar bolega. Customer se
+    OTP puchna ya share karna mana hai; ye compliance aur trust dono ke liye critical hai.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rn">Rule 02</div>
+    <div class="rt">Payment sirf official link se maano</div>
+    <div class="rd">Payment verify sirf system ke webhook se hota hai. Customer screenshot bheje
+    to usse proof ke roop me kabhi mat lo — "payment ka intezar karein, verification automatic
+    hai" bolo. Fake screenshot fraud ka sabse common tareeka hai.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rn">Rule 03</div>
+    <div class="rt">Sensitive data masked rakho</div>
+    <div class="rd">Aadhaar number chat me bhi mask karke likho (XXXX XXXX 1234). Pura number,
+    password ya OTP kisi bhi message, task note ya receipt me repeat na karo. Documents sirf
+    system ke secure storage me rehte hain.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rn">Rule 04</div>
+    <div class="rt">Duplicate application se bacho</div>
+    <div class="rd">Naya kaam shuru karne se pehle customer ka purana application STATUS se check
+    karo. Ek hi service ke do applications se government fee do baar kat sakti hai aur refund
+    mushkil hota hai. Application number hi single source of truth hai.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rn">Rule 05</div>
+    <div class="rt">Fees aur rules go-live par verify karo</div>
+    <div class="rd">Is guide me fees system ki pricing table se aayi hain. Government portal ke
+    fee aur rules time-to-time badalte hain — PORTAL_MODE LIVE karne se pehle aur mahine me ek
+    baar official portal se verify karte raho.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rn">Rule 06</div>
+    <div class="rt">Aadhaar-linked mobile pehla check hai</div>
+    <div class="rd">Ayushman, E-Shram, Voter ID, NSP — har e-KYC ka OTP customer ke Aadhaar-linked
+    mobile par hi aata hai. Kaam shuru karne se pehle poochho: "ye number Aadhaar se linked hai?"
+    Link nahi hai to pehle Aadhaar center bhejo — warna aadha kaam karke atak jayenge. Saath me
+    customer ka DigiLocker account bhi bana do — documents hamesha safe aur valid rehte hain.</div>
+  </div>
+
+  <h3 class="sub"><span class="idx">1.2</span>Operator Commands — WhatsApp par kaam kaise chalayein</h3>
+  <table>
+    <thead><tr><th style="width:170px">Command</th><th>Kab use karein</th></tr></thead>
+    <tbody>
+      <tr><td><b>QUEUE</b></td><td>Saare pending applications dekhne ke liye — jo payment ke baad aapke kaam ka intezar kar rahe hain.</td></tr>
+      <tr><td><b>DONE CSC-2026-XXXXXX</b></td><td>Portal par submit ho gaya — customer ko confirmation jayegi aur application band hogi.</td></tr>
+      <tr><td><b>ISSUE CSC-2026-XXXXXX [note]</b></td><td>Document me dikkat, rejection, ya customer se extra chahiye — customer ko issue message jayega.</td></tr>
+      <tr><td><b>PAID CSC-2026-XXXXXX</b></td><td>Payment manually confirm karna ho (rare case) — pehle bank statement me zaroor check karo.</td></tr>
+      <tr><td><b>HUMAN</b> / <b>RESUME</b></td><td>Customer "HUMAN" likhe to bot ruk jata hai; kaam poora hone par RESUME se bot wapas chalu.</td></tr>
+    </tbody>
+  </table>

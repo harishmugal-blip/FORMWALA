@@ -1,0 +1,318 @@
+{
+ "id": "3c5c1414-0000-4000-8000-000000000014",
+ "name": "CSC 14 - Application Engine",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst j = $json;\nreturn [{ json: { action: j.action || 'finalize', application_id: j.application_id || '', phone: j.phone || '', service_id: j.service_id || '' } }];"
+   },
+   "name": "Route Action",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-Finalize",
+       "leftValue": "={{ $json.action }}",
+       "rightValue": "finalize",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Finalize?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $('Route Action').first().json.application_id }}"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get App",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst app = $('Get App').first().json;\nconst chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789';\nlet num = '';\nfor (let i = 0; i < 6; i++) num += chars[Math.floor(Math.random() * chars.length)];\nconst prefix = 'CSC-2026-';\nconst existing = app.application_number || '';\nconst final = existing || (prefix + num);\nreturn [{ json: { application_number: final, application_id: app.application_id, status: app.status } }];"
+   },
+   "name": "Gen App Number",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $json.application_id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "application_number": "={{ $json.application_number }}",
+      "status": "PAID",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Update App Final",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "application_status_history"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "application_id": "={{ $('Gen App Number').first().json.application_id }}",
+      "application_number": "={{ $('Gen App Number').first().json.application_number }}",
+      "old_status": "PAYMENT_PENDING",
+      "new_status": "PAID",
+      "note": "Application number generated after payment verification",
+      "created_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "History Finalize",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst u = $('Update App Final').first().json;\nreturn [{ json: { ok: true, application_id: u.application_id || $('Gen App Number').first().json.application_id, application_number: $('Gen App Number').first().json.application_number, status: 'PAID' } }];"
+   },
+   "name": "Finalize Output",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "application_id": "={{ 'APP' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase() }}",
+      "customer_phone": "={{ $('Route Action').first().json.phone }}",
+      "service_id": "={{ $('Route Action').first().json.service_id }}",
+      "status": "DRAFT",
+      "form_data": "",
+      "application_number": "",
+      "created_at": "={{ $now.toISO() }}",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Create Draft",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Route Action",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Route Action": {
+   "main": [
+    [
+     {
+      "node": "Finalize?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Finalize?": {
+   "main": [
+    [
+     {
+      "node": "Get App",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Create Draft",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get App": {
+   "main": [
+    [
+     {
+      "node": "Gen App Number",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Gen App Number": {
+   "main": [
+    [
+     {
+      "node": "Update App Final",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Update App Final": {
+   "main": [
+    [
+     {
+      "node": "History Finalize",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "History Finalize": {
+   "main": [
+    [
+     {
+      "node": "Finalize Output",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

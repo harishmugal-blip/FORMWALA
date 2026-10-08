@@ -1,0 +1,254 @@
+{
+ "id": "3c5c1616-0000-4000-8000-000000000016",
+ "name": "CSC 16 - Operator Dispatcher",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=ADMIN_WHATSAPP_NUMBER"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Admin Number",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "application_documents"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $json.application_id }}"
+      }
+     ]
+    },
+    "returnAll": true
+   },
+   "name": "Get Docs Count",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "returnAll": true,
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "application_field_values"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $('Get Admin Number').first().json && $json.application_id ? $json.application_id : '' }}"
+      }
+     ]
+    },
+    "returnAll": true
+   },
+   "name": "Get Field Values",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "returnAll": true,
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "operator_tasks"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "task_id": "={{ 'TASK' + Date.now().toString(36).toUpperCase() }}",
+      "application_id": "={{ $('Get Admin Number').first().json && 1 ? $('Trigger').first().json.application_id : $('Trigger').first().json.application_id }}",
+      "application_number": "={{ $('Trigger').first().json.application_number }}",
+      "operator_phone": "={{ $('Get Admin Number').first().json.config_value || 'SET_ADMIN_NUMBER' }}",
+      "status": "PENDING",
+      "note": "",
+      "created_at": "={{ $now.toISO() }}",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Create Operator Task",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst t = $('Trigger').first().json;\nconst admin = $('Get Admin Number').first().json || {};\nlet fields = [];\ntry { fields = $('Get Field Values').all().map(i => i.json).filter(f => f && f.field_key); } catch (e) {}\nlet docs = [];\ntry { docs = $('Get Docs Count').all().map(i => i.json).filter(d => d && d.doc_key); } catch (e) {}\nlet msg = '\\ud83d\\udc64\\u200d\\ud83d\\udcbc *NAYA CSC TASK* \\ud83d\\udea8\\n\\n';\nmsg += '\\ud83d\\udccb Application: *' + (t.application_number || t.application_id) + '*\\n';\nmsg += '\\ud83d\\udcf1 Customer: ' + (t.customer_phone || '') + '\\n';\nmsg += '\\ud83d\\udee0\\ufe0f Service: ' + (t.service_id || '') + '\\n';\nmsg += '\\ud83d\\udcb0 Paid: Rs ' + (t.total || 0) + '\\n\\n';\nmsg += '\\ud83d\\udcdd *Form Data:*\\n';\nfields.forEach(f => {\n  let v = f.field_value || '';\n  if (f.field_key.includes('aadhaar') || f.field_key === 'aadhaar_number') v = 'XXXX XXXX ' + String(v).slice(-4);\n  msg += '  ' + f.field_key + ': ' + v + '\\n';\n});\nmsg += '\\n\\ud83d\\udcc4 Documents: ' + docs.length + ' received\\n';\nmsg += '\\n\\ud83d\\udd17 Portal par login karke form bharo. OTP/CAPTCHA khud se daalo (kabhi customer se OTP na maango).\\n\\n';\nmsg += '*Commands:*\\n';\nmsg += '  DONE ' + (t.application_number || '') + ' \\u2192 portal par submit ho gaya\\n';\nmsg += '  ISSUE ' + (t.application_number || '') + ' [note] \\u2192 problem report karo\\n';\nmsg += '  QUEUE \\u2192 pending tasks dekho';\nreturn [{ json: { phone: admin.config_value || '', message: msg, template: 'OPERATOR_TASK', related_id: t.application_id } }];"
+   },
+   "name": "Build Operator Msg",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "action": "send_whatsapp",
+      "phone": "={{ $json.phone }}",
+      "message": "={{ $json.message }}",
+      "template": "={{ $json.template }}",
+      "related_id": "={{ $json.related_id }}"
+     }
+    }
+   },
+   "name": "Notify Operator",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Get Admin Number",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Admin Number": {
+   "main": [
+    [
+     {
+      "node": "Get Docs Count",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Docs Count": {
+   "main": [
+    [
+     {
+      "node": "Get Field Values",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Field Values": {
+   "main": [
+    [
+     {
+      "node": "Create Operator Task",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Create Operator Task": {
+   "main": [
+    [
+     {
+      "node": "Build Operator Msg",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Build Operator Msg": {
+   "main": [
+    [
+     {
+      "node": "Notify Operator",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

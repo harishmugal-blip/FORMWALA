@@ -1,0 +1,90 @@
+{
+ "id": "3c5c1111-0000-4000-8000-000000000011",
+ "name": "CSC 11 - Pricing Engine",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "service_pricing"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "service_id",
+       "condition": "eq",
+       "keyValue": "={{ $json.service_id }}"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Pricing",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst p = $json;\nconst input = $('Trigger').first().json;\nconst gstPct = Number(p.gst_percent || 18);\nconst govFee = Number(p.gov_fee || 0);\nconst charge = Number(p.service_charge || 0);\nconst gst = Math.round(charge * gstPct / 100);\nconst total = govFee + charge + gst;\nreturn [{ json: { ok: true, service_id: input.service_id, gov_fee: govFee, service_charge: charge, gst_percent: gstPct, gst, total, currency: 'INR', pricing_note: 'Govt fee: Rs ' + govFee + ' + Service charge: Rs ' + charge + ' + GST(' + gstPct + '%): Rs ' + gst + ' = Rs ' + total } }];"
+   },
+   "name": "Compute Price",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Get Pricing",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Pricing": {
+   "main": [
+    [
+     {
+      "node": "Compute Price",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

@@ -1,0 +1,211 @@
+{
+ "id": "3c5c2424-0000-4000-8000-000000000024",
+ "name": "CSC 24 - Audit Logger (Compliance Trail)",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst j = $json;\nreturn [{ json: {\n  event_id: 'AUD' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase(),\n  event_type: j.event_type || 'GENERIC',\n  actor: j.actor || 'SYSTEM',\n  phone: j.phone || '',\n  application_id: j.application_id || '',\n  payload: typeof j.payload === 'string' ? j.payload : JSON.stringify(j.payload || {}),\n  is_consent: j.event_type === 'LOG_CONSENT',\n  consent_type: j.consent_type || 'SERVICE_REQUEST',\n  consent_text: j.consent_text || 'Main CSC Smart Seva ko apni details process karne ki permission deti/deta hoon.',\n  granted: j.granted || 'TRUE',\n  source: j.source || 'WHATSAPP'\n} }];"
+   },
+   "name": "Prepare Audit",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "audit_log"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "event_id": "={{ $json.event_id }}",
+      "event_type": "={{ $json.event_type }}",
+      "actor": "={{ $json.actor }}",
+      "phone": "={{ $json.phone }}",
+      "application_id": "={{ $json.application_id }}",
+      "payload": "={{ $json.payload }}",
+      "created_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Write Audit",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-Consent",
+       "leftValue": "={{ $json.is_consent }}",
+       "rightValue": "true",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Consent?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "consent_log"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Prepare Audit').first().json.phone }}",
+      "consent_type": "={{ $('Prepare Audit').first().json.consent_type }}",
+      "consent_text": "={{ $('Prepare Audit').first().json.consent_text }}",
+      "granted": "={{ $('Prepare Audit').first().json.granted }}",
+      "source": "={{ $('Prepare Audit').first().json.source }}",
+      "created_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Write Consent",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nreturn [{ json: { ok: true, event_id: $('Prepare Audit').first().json.event_id } }];"
+   },
+   "name": "Audit Output",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Prepare Audit",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prepare Audit": {
+   "main": [
+    [
+     {
+      "node": "Write Audit",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Write Audit": {
+   "main": [
+    [
+     {
+      "node": "Consent?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Consent?": {
+   "main": [
+    [
+     {
+      "node": "Write Consent",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Audit Output",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Write Consent": {
+   "main": [
+    [
+     {
+      "node": "Audit Output",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

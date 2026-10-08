@@ -1,0 +1,770 @@
+{
+ "id": "3c5c0808-0000-4000-8000-000000000008",
+ "name": "CSC 08 - Document Collector",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "conversation_state"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "phone",
+       "condition": "eq",
+       "keyValue": "={{ $json.phone }}"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Conv State",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst input = $('Trigger').first().json;\nconst state = $('Get Conv State').first().json || {};\nlet ctx = {};\ntry { ctx = JSON.parse(state.context_data || '{}'); } catch (e) {}\nconst phone = input.phone;\nconst media = input.media || null;\nconst text = String(input.message || '').trim();\nif ((state.state || '') !== 'DOCS') {\n  return [{ json: { next: 'not_docs', phone, text } }];\n}\nreturn [{ json: { next: 'in_docs', phone, media, text, application_id: ctx.application_id, service_id: state.service_id } }];"
+   },
+   "name": "Compute",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-InDocs",
+       "leftValue": "={{ $json.next }}",
+       "rightValue": "in_docs",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "In Docs?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst j = $json;\nreturn [{ json: { reply: 'Filhaal documents ki zaroorat nahi. Service ke naam se naya kaam shuru karein ya STATUS likhein.', phone: j.phone } }];"
+   },
+   "name": "Not Docs Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c0505-0000-4000-8000-000000000005",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "action": "get_full_config",
+      "service_id": "={{ $('Compute').first().json.service_id }}"
+     }
+    }
+   },
+   "name": "Load Config",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "application_documents"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $('Compute').first().json.application_id }}"
+      }
+     ]
+    },
+    "returnAll": true
+   },
+   "name": "Get Saved Docs",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "returnAll": true,
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst cfg = $('Load Config').first().json || {};\nconst cs = $('Compute').first().json;\nconst required = cfg.documents || [];\nlet saved = [];\ntry { saved = $('Get Saved Docs').all().map(i => i.json).filter(d => d && d.doc_key); } catch (e) {}\nconst savedKeys = saved.map(d => d.doc_key);\nconst missing = required.filter(d => !savedKeys.includes(d.doc_key));\nconst allDone = missing.length === 0;\nconst hasMedia = !!(cs.media && cs.media.id);\nreturn [{ json: { allDone, hasMedia, missing, nextDoc: missing[0] || null, savedCount: saved.length, phone: cs.phone, application_id: cs.application_id, media: cs.media, text: cs.text, service: cfg.service || {} } }];"
+   },
+   "name": "Match Next Doc",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-AllDocsAlready",
+       "leftValue": "={{ $json.allDone }}",
+       "rightValue": "true",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "All Docs Already?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst m = $json;\nreturn [{ json: { action: 'finalize_docs', phone: m.phone, application_id: m.application_id, service_id: m.service.service_id || '' } }];"
+   },
+   "name": "Go Payment",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-HasMedia",
+       "leftValue": "={{ $json.hasMedia }}",
+       "rightValue": "true",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Has Media?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst m = $json;\nconst d = m.nextDoc;\nlet msg;\nif (d) {\n  msg = '\\ud83d\\udcc4 Agla document: \"' + (d.label || d.doc_key) + '\"\\n' + (d.question || 'Photo/PDF bhejein.') + '\\n\\n(' + m.savedCount + '/' + (m.savedCount + m.missing.length) + ' documents mil gaye)';\n} else {\n  msg = 'Documents receive ho gaye, processing mein hai...';\n}\nreturn [{ json: { reply: msg, phone: m.phone } }];"
+   },
+   "name": "Remind Next Doc",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "application_documents"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "application_id": "={{ $('Match Next Doc').first().json.application_id }}",
+      "phone": "={{ $('Match Next Doc').first().json.phone }}",
+      "doc_key": "={{ $('Match Next Doc').first().json.nextDoc.doc_key }}",
+      "media_id": "={{ $('Match Next Doc').first().json.media.id }}",
+      "mime_type": "={{ $('Match Next Doc').first().json.media.mime || '' }}",
+      "ocr_text": "",
+      "status": "RECEIVED",
+      "created_at": "={{ $now.toISO() }}",
+      "verified_by": "CUSTOMER"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Save Doc",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c0909-0000-4000-8000-000000000009",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "media_id": "={{ $('Match Next Doc').first().json.media.id }}",
+      "mime_type": "={{ $('Match Next Doc').first().json.media.mime || '' }}",
+      "application_id": "={{ $('Match Next Doc').first().json.application_id }}",
+      "doc_key": "={{ $('Match Next Doc').first().json.nextDoc.doc_key }}"
+     }
+    }
+   },
+   "name": "Run OCR",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ],
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst ocr = $json || {};\nconst m = $('Match Next Doc').first().json;\nconst remaining = m.missing.length - 1;\nreturn [{ json: { ocr_note: ocr.ocr_text ? 'OCR done' : (ocr.note || 'OCR skipped'), remaining, savedCount: m.savedCount + 1, total: m.savedCount + m.missing.length, phone: m.phone, application_id: m.application_id } }];"
+   },
+   "name": "Update Doc Locally",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "application_documents"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "media_id",
+       "condition": "eq",
+       "keyValue": "={{ $('Match Next Doc').first().json.media.id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "ocr_text": "={{ $('Run OCR').first().json.ocr_text || '' }}",
+      "status": "RECEIVED",
+      "verified_by": "CUSTOMER"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Store OCR Text",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-MoreDocsLeft",
+       "leftValue": "={{ $('Update Doc Locally').first().json.remaining }}",
+       "rightValue": "0",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "More Docs Left?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst u = $('Update Doc Locally').first().json;\nconst m = $('Match Next Doc').first().json;\nconst savedKeys = [];\nreturn [{ json: { reply: '\\u2705 Document mil gaya (' + u.savedCount + '/' + u.total + ').\\n\\nAgla document bhejein. Kaam ho jaye to kuch na type karein - main khud aage badha dunga.', phone: u.phone } }];"
+   },
+   "name": "Next Doc Ask",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "conversation_state"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "phone",
+       "condition": "eq",
+       "keyValue": "={{ $json.phone }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "state": "PAYMENT",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Set State Payment",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c1111-0000-4000-8000-000000000011",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "service_id": "={{ $('Go Payment').first().json.service_id || $('Match Next Doc').first().json.service.service_id }}"
+     }
+    }
+   },
+   "name": "Get Pricing",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c1212-0000-4000-8000-000000000012",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "application_id": "={{ $('Go Payment').first().json.application_id || $('Match Next Doc').first().json.application_id }}",
+      "phone": "={{ $('Go Payment').first().json.phone || $('Match Next Doc').first().json.phone }}",
+      "service_id": "={{ $('Get Pricing').first().json.service_id }}",
+      "total": "={{ $('Get Pricing').first().json.total }}",
+      "gov_fee": "={{ $('Get Pricing').first().json.gov_fee }}",
+      "service_charge": "={{ $('Get Pricing').first().json.service_charge }}",
+      "gst": "={{ $('Get Pricing').first().json.gst }}"
+     }
+    }
+   },
+   "name": "Init Payment",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const gp = $('Go Payment').first().json;\nconst mn = $('Match Next Doc').first().json;\nreturn [{ json: { service_id: gp.service_id || (mn.service && mn.service.service_id) || '' } }];"
+   },
+   "name": "Prep Get Pricing",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -120,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const pr = $('Get Pricing').first().json;\nconst gp = $('Go Payment').first().json;\nconst mn = $('Match Next Doc').first().json;\nreturn [{ json: { application_id: gp.application_id || mn.application_id, phone: gp.phone || mn.phone, service_id: pr.service_id, total: pr.total, gov_fee: pr.gov_fee, service_charge: pr.service_charge, gst: pr.gst } }];"
+   },
+   "name": "Prep Init Payment",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -120,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Get Conv State",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Conv State": {
+   "main": [
+    [
+     {
+      "node": "Compute",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Compute": {
+   "main": [
+    [
+     {
+      "node": "In Docs?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "In Docs?": {
+   "main": [
+    [
+     {
+      "node": "Load Config",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Not Docs Reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Load Config": {
+   "main": [
+    [
+     {
+      "node": "Get Saved Docs",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Saved Docs": {
+   "main": [
+    [
+     {
+      "node": "Match Next Doc",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Match Next Doc": {
+   "main": [
+    [
+     {
+      "node": "All Docs Already?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "All Docs Already?": {
+   "main": [
+    [
+     {
+      "node": "Go Payment",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Has Media?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Has Media?": {
+   "main": [
+    [
+     {
+      "node": "Save Doc",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Remind Next Doc",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Save Doc": {
+   "main": [
+    [
+     {
+      "node": "Run OCR",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Run OCR": {
+   "main": [
+    [
+     {
+      "node": "Update Doc Locally",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Update Doc Locally": {
+   "main": [
+    [
+     {
+      "node": "Store OCR Text",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Store OCR Text": {
+   "main": [
+    [
+     {
+      "node": "More Docs Left?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "More Docs Left?": {
+   "main": [
+    [
+     {
+      "node": "Set State Payment",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Next Doc Ask",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Go Payment": {
+   "main": [
+    [
+     {
+      "node": "Set State Payment",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Set State Payment": {
+   "main": [
+    [
+     {
+      "node": "Prep Get Pricing",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Pricing": {
+   "main": [
+    [
+     {
+      "node": "Prep Init Payment",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep Get Pricing": {
+   "main": [
+    [
+     {
+      "node": "Get Pricing",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep Init Payment": {
+   "main": [
+    [
+     {
+      "node": "Init Payment",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

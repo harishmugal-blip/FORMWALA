@@ -1,0 +1,461 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// CSC SMART SEVA - Admin Portal Schema
+// Mirrors n8n Data Tables (22 tables) 1:1
+// NOTE: Production me provider = "postgresql" + Supabase URL
+// ============================================================
+
+// ── SERVICE CONFIGURATION ────────────────────────────────────
+
+model ServiceCatalog {
+  serviceId        String  @id @map("service_id")
+  serviceName      String  @map("service_name")
+  category         String
+  description      String  @default("")
+  governmentFee    Float   @default(0) @map("government_fee")
+  serviceCharge    Float   @default(0) @map("service_charge")
+  gstPercent       Float   @default(18) @map("gst_percent")
+  totalFee         Float   @default(0) @map("total_fee")
+  portalUrl        String  @default("") @map("portal_url")
+  portalType       String  @default("") @map("portal_type")
+  operatorRequired String  @default("FALSE") @map("operator_required")
+  otpRequired      String  @default("FALSE") @map("otp_required")
+  captchaRequired  String  @default("FALSE") @map("captcha_required")
+  statusTracking   String  @default("TRUE") @map("status_tracking")
+  receiptRequired  String  @default("TRUE") @map("receipt_required")
+  processingSteps  String  @default("") @map("processing_steps")
+  active           String  @default("TRUE")
+  createdAt        DateTime @default(now()) @map("createdAt")
+  updatedAt        DateTime @updatedAt @map("updatedAt")
+
+  fields    ServiceField[]
+  documents ServiceDocument[]
+  pricing   ServicePricing?
+  applications Application[]
+
+  @@map("service_catalog")
+}
+
+model ServiceField {
+  id        Int     @id @default(autoincrement())
+  serviceId String  @map("service_id")
+  fieldKey  String  @map("field_key")
+  fieldOrder Int    @default(0) @map("field_order")
+  label     String
+  fieldType String  @default("TEXT") @map("field_type")
+  question  String  @default("")
+  required  String  @default("TRUE")
+  options   String  @default("")
+  errorHint String  @default("") @map("error_hint")
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  service ServiceCatalog @relation(fields: [serviceId], references: [serviceId])
+
+  @@index([serviceId])
+  @@map("service_fields")
+}
+
+model ServiceDocument {
+  id            Int     @id @default(autoincrement())
+  serviceId     String  @map("service_id")
+  docKey        String  @map("doc_key")
+  docOrder      Int     @default(0) @map("doc_order")
+  label         String
+  acceptedTypes String  @default("image,pdf") @map("accepted_types")
+  question      String  @default("")
+  required      String  @default("TRUE")
+  createdAt     DateTime @default(now()) @map("createdAt")
+  updatedAt     DateTime @updatedAt @map("updatedAt")
+
+  service ServiceCatalog @relation(fields: [serviceId], references: [serviceId])
+
+  @@index([serviceId])
+  @@map("service_documents")
+}
+
+model ServicePricing {
+  id           Int     @id @default(autoincrement())
+  serviceId    String  @unique @map("service_id")
+  govFee       Float   @default(0) @map("gov_fee")
+  serviceCharge Float  @default(0) @map("service_charge")
+  gstPercent   Float   @default(18) @map("gst_percent")
+  gstAmount    Float   @default(0) @map("gst_amount")
+  totalFee     Float   @default(0) @map("total_fee")
+  currency     String  @default("INR")
+  active       String  @default("TRUE")
+  createdAt    DateTime @default(now()) @map("createdAt")
+  updatedAt    DateTime @updatedAt @map("updatedAt")
+
+  service ServiceCatalog @relation(fields: [serviceId], references: [serviceId])
+
+  @@index([serviceId])
+  @@map("service_pricing")
+}
+
+// ── CUSTOMER & CONVERSATION ──────────────────────────────────
+
+model Customer {
+  id         Int      @id @default(autoincrement())
+  phone      String   @unique
+  name       String   @default("")
+  language   String   @default("hinglish")
+  customerId String   @default("") @map("customer_id")
+  tenantId   String   @default("TENANT_CSC_001") @map("tenant_id")
+  createdAt  DateTime @default(now()) @map("createdAt")
+  updatedAt  DateTime @updatedAt @map("updatedAt")
+
+  @@index([tenantId])
+  @@map("customers")
+}
+
+model ConversationState {
+  id            Int     @id @default(autoincrement())
+  phone         String
+  state         String  @default("NEW")
+  serviceId     String  @default("") @map("service_id")
+  contextData   String  @default("{}") @map("context_data")
+  handoffActive String  @default("FALSE") @map("handoff_active")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  createdAt     DateTime @default(now()) @map("createdAt")
+
+  @@index([phone])
+  @@map("conversation_state")
+}
+
+model MessageLog {
+  id          Int     @id @default(autoincrement())
+  phone       String
+  direction   String  @default("IN")
+  messageType String  @default("text") @map("message_type")
+  body        String  @default("")
+  waMessageId String  @default("") @map("wa_message_id")
+  status      String  @default("SENT")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([phone])
+  @@map("message_log")
+}
+
+model ServiceResearch {
+  id              Int     @id @default(autoincrement())
+  researchId      String  @map("research_id")
+  phone           String
+  userMessage     String  @default("") @map("user_message")
+  aiAnalysis      String  @default("") @map("ai_analysis")
+  proposedService String  @default("") @map("proposed_service")
+  status          String  @default("OPEN")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("service_research")
+}
+
+model HandoffQueue {
+  id         Int      @id @default(autoincrement())
+  phone      String
+  name       String   @default("")
+  reason     String   @default("")
+  status     String   @default("WAITING")
+  takenBy    String   @default("") @map("taken_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+  resolvedAt DateTime? @map("resolved_at")
+
+  @@map("handoff_queue")
+}
+
+// ── APPLICATIONS ─────────────────────────────────────────────
+
+model Application {
+  id              Int     @id @default(autoincrement())
+  applicationId   String  @unique @map("application_id")
+  customerPhone   String  @map("customer_phone")
+  serviceId       String  @map("service_id")
+  status          String  @default("DRAFT")
+  tenantId        String  @default("TENANT_CSC_001") @map("tenant_id")
+  govFee          Float?  @map("gov_fee")
+  serviceCharge   Float?  @map("service_charge")
+  gst             Float?
+  totalFee        Float?  @map("total_fee")
+  formData        String  @default("") @map("form_data")
+  applicationNumber String @default("") @map("application_number")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  service  ServiceCatalog           @relation(fields: [serviceId], references: [serviceId])
+  fieldValues  ApplicationFieldValue[]
+  documents    ApplicationDocument[]
+  payments     Payment[]
+  receipts     Receipt[]
+  tasks        OperatorTask[]
+  statusHistory ApplicationStatusHistory[]
+  paymentEvents PaymentEvent[]
+
+  @@index([customerPhone])
+  @@index([serviceId])
+  @@index([status])
+  @@map("applications")
+}
+
+model ApplicationFieldValue {
+  id            Int     @id @default(autoincrement())
+  applicationId String  @map("application_id")
+  phone         String
+  fieldKey      String  @map("field_key")
+  fieldValue    String  @default("") @map("field_value")
+  validated     String  @default("FALSE")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [applicationId], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("application_field_values")
+}
+
+model ApplicationDocument {
+  id            Int     @id @default(autoincrement())
+  applicationId String  @map("application_id")
+  phone         String
+  docKey        String  @map("doc_key")
+  mediaId       String  @default("") @map("media_id")
+  mimeType      String  @default("") @map("mime_type")
+  ocrText       String  @default("") @map("ocr_text")
+  status        String  @default("RECEIVED")
+  verifiedBy    String  @default("") @map("verified_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  application Application @relation(fields: [applicationId], references: [applicationId], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("application_documents")
+}
+
+model ApplicationStatusHistory {
+  id                Int     @id @default(autoincrement())
+  applicationId     String  @map("application_id")
+  applicationNumber String  @default("") @map("application_number")
+  oldStatus         String  @default("") @map("old_status")
+  newStatus         String  @default("") @map("new_status")
+  note              String  @default("")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  application Application @relation(fields: [applicationId], references: [applicationId], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("application_status_history")
+}
+
+// ── PAYMENTS ─────────────────────────────────────────────────
+
+model Payment {
+  id            Int     @id @default(autoincrement())
+  paymentId     String  @map("payment_id")
+  applicationId String  @map("application_id")
+  customerPhone String  @map("customer_phone")
+  amount        Float   @default(0)
+  gateway       String  @default("MOCK")
+  transactionId String  @default("") @map("transaction_id")
+  status        String  @default("PENDING")
+  meta          String  @default("{}")
+  createdAt     DateTime @default(now()) @map("created_at")
+  paidAt        DateTime? @map("paid_at")
+
+  application Application @relation(fields: [applicationId], references: [applicationId], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([status])
+  @@map("payments")
+}
+
+model PaymentEvent {
+  id             Int     @id @default(autoincrement())
+  eventId        String  @map("event_id")
+  applicationId  String  @map("application_id")
+  gateway        String  @default("MOCK")
+  eventType      String  @default("") @map("event_type")
+  payload        String  @default("")
+  signatureValid String  @default("TRUE") @map("signature_valid")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  application Application @relation(fields: [applicationId], references: [applicationId], onDelete: Cascade)
+
+  @@map("payment_events")
+}
+
+model Receipt {
+  id                Int     @id @default(autoincrement())
+  receiptId         String  @map("receipt_id")
+  applicationId     String  @map("application_id")
+  applicationNumber String  @default("") @map("application_number")
+  amount            Float   @default(0)
+  payload           String  @default("")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  application Application @relation(fields: [applicationId], references: [applicationId], onDelete: Cascade)
+
+  @@map("receipts")
+}
+
+// ── OPERATIONS ───────────────────────────────────────────────
+
+model OperatorTask {
+  id                Int     @id @default(autoincrement())
+  taskId            String  @map("task_id")
+  applicationId     String  @map("application_id")
+  applicationNumber String  @default("") @map("application_number")
+  operatorPhone     String  @default("") @map("operator_phone")
+  status            String  @default("PENDING")
+  note              String  @default("")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [applicationId], onDelete: Cascade)
+
+  @@index([status])
+  @@map("operator_tasks")
+}
+
+model NotificationLog {
+  id        Int     @id @default(autoincrement())
+  phone     String
+  template  String  @default("")
+  message   String  @default("")
+  status    String  @default("SENT")
+  relatedId String  @default("") @map("related_id")
+  error     String  @default("")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications_log")
+}
+
+model ReminderLog {
+  id             Int     @id @default(autoincrement())
+  applicationId  String  @map("application_id")
+  phone          String
+  reminderType   String  @default("PAYMENT") @map("reminder_type")
+  count          Int     @default(1)
+  status         String  @default("SENT")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("reminders_log")
+}
+
+model AuditLog {
+  id            Int     @id @default(autoincrement())
+  eventId       String  @map("event_id")
+  eventType     String  @map("event_type")
+  actor         String  @default("SYSTEM")
+  phone         String  @default("")
+  applicationId String  @default("") @map("application_id")
+  payload       String  @default("")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("audit_log")
+}
+
+model ConsentLog {
+  id           Int     @id @default(autoincrement())
+  phone        String
+  serviceId    String  @default("") @map("service_id")
+  consentType  String  @default("SERVICE") @map("consent_type")
+  payload      String  @default("")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("consent_log")
+}
+
+model SystemConfig {
+  id          Int     @id @default(autoincrement())
+  configKey   String  @unique @map("config_key")
+  configValue String  @default("") @map("config_value")
+  description String  @default("")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime @default(now()) @map("createdAt")
+
+  @@map("system_config")
+}
+
+// ============================================================
+// WEB CHATBOT (landing page) — session + transcript
+// n8n data tables se koi collision nahi: web-only state
+// ============================================================
+
+model WebChatSession {
+  id         String   @id @default(uuid())
+  sessionId  String   @unique @map("session_id")
+  stage      String   @default("ID_NAME")
+  customerId String   @default("") @map("customer_id")
+  name       String   @default("")
+  phone      String   @default("")
+  state      String   @default("{}") @map("state")
+  tenantId   String   @default("TENANT_CSC_001") @map("tenant_id")
+  lastMsgHash String  @default("") @map("last_msg_hash")
+  lastMsgAt  DateTime? @map("last_msg_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@map("web_chat_sessions")
+}
+
+model WebChatMessage {
+  id        String   @id @default(uuid())
+  sessionId String   @map("session_id")
+  role      String
+  text      String   @default("")
+  meta      String   @default("{}") @map("meta")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([sessionId])
+  @@map("web_chat_messages")
+}
+
+// ============================================================
+// FORMBOT AI SERVICE ASSISTANT — analytics + web handoff
+// (safe metrics only; kabhi sensitive conversation content nahi)
+// ============================================================
+
+model ChatEvent {
+  id            String   @id @default(uuid())
+  sessionId     String   @default("") @map("session_id")
+  tenantId      String   @default("TENANT_CSC_001") @map("tenant_id")
+  customerId    String   @default("") @map("customer_id")
+  phone         String   @default("")
+  eventType     String   @map("event_type")
+  serviceId     String   @default("") @map("service_id")
+  applicationId String   @default("") @map("application_id")
+  detail        String   @default("")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([eventType])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("chat_events")
+}
+
+model ChatHandoff {
+  id         String   @id @default(uuid())
+  sessionId  String   @map("session_id")
+  tenantId   String   @default("TENANT_CSC_001") @map("tenant_id")
+  customerId String   @default("") @map("customer_id")
+  phone      String   @default("")
+  name       String   @default("")
+  reason     String   @default("")
+  status     String   @default("WAITING") // WAITING | TAKEN | RESOLVED
+  takenBy    String   @default("") @map("taken_by")
+  note       String   @default("")
+  createdAt  DateTime @default(now()) @map("created_at")
+  resolvedAt DateTime? @map("resolved_at")
+
+  @@index([status])
+  @@index([tenantId])
+  @@map("chat_handoffs")
+}

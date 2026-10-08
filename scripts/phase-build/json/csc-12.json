@@ -1,0 +1,320 @@
+{
+ "id": "3c5c1212-0000-4000-8000-000000000012",
+ "name": "CSC 12 - Payment Initiator",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=PAYMENT_MODE"
+      }
+     ]
+    },
+    "returnAll": true
+   },
+   "name": "Get All Config",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "returnAll": true,
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst rows = $input.all().map(i => i.json).filter(r => r && r.config_key);\nconst cfg = {};\nfor (const r of rows) cfg[r.config_key] = r.config_value;\nconst mode = (cfg.PAYMENT_MODE || 'MOCK').toUpperCase();\nconst t = $('Trigger').first().json;\nreturn [{ json: {\n  mode,\n  rzp_key: cfg.RAZORPAY_KEY_ID || '',\n  rzp_secret: cfg.RAZORPAY_KEY_SECRET || '',\n  application_id: t.application_id, phone: t.phone, service_id: t.service_id,\n  total: Number(t.total || 0), gov_fee: Number(t.gov_fee || 0), service_charge: Number(t.service_charge || 0), gst: Number(t.gst || 0)\n} }];"
+   },
+   "name": "Config Map",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "payments"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "payment_id": "={{ 'PAY' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase() }}",
+      "application_id": "={{ $json.application_id }}",
+      "customer_phone": "={{ $json.phone }}",
+      "amount": "={{ $json.total }}",
+      "gateway": "={{ $json.mode === 'MOCK' ? 'MOCK' : 'RAZORPAY' }}",
+      "status": "INITIATED",
+      "created_at": "={{ $now.toISO() }}",
+      "paid_at": ""
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Create Payment Record",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst cm = $('Config Map').first().json;\nconst pay = $('Create Payment Record').first().json;\nconst info = {\n  mode: cm.mode, rzp_key: cm.rzp_key, rzp_secret: cm.rzp_secret,\n  payment_id: pay.payment_id || pay.id, application_id: cm.application_id, phone: cm.phone, service_id: cm.service_id,\n  total: cm.total, gov_fee: cm.gov_fee, service_charge: cm.service_charge, gst: cm.gst\n};\nif (cm.mode !== 'MOCK' && cm.rzp_key && cm.rzp_secret) info.use_razorpay = true;\nelse info.use_razorpay = false;\nreturn [{ json: info }];"
+   },
+   "name": "Build Payment Info",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-Razorpay",
+       "leftValue": "={{ $json.use_razorpay }}",
+       "rightValue": "true",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Razorpay?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.razorpay.com/v1/orders",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBasicAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ amount: Math.round($('Build Payment Info').first().json.total * 100), currency: 'INR', receipt: $('Build Payment Info').first().json.application_id, notes: { application_id: $('Build Payment Info').first().json.application_id, phone: $('Build Payment Info').first().json.phone } }) }}",
+    "options": {
+     "response": {
+      "response": {
+       "neverError": true
+      }
+     },
+     "timeout": 30000
+    }
+   },
+   "name": "Create RZP Order",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    0,
+    0
+   ],
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst order = $json;\nconst info = $('Build Payment Info').first().json;\nif (!order.id) {\n  return [{ json: { ...info, payment_url: '', rzp_fail: true, order_id: '' } }];\n}\nreturn [{ json: { ...info, order_id: order.id, rzp_fail: false } }];"
+   },
+   "name": "RZP Link",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst info = $json;\nconst am = info.total;\nconst upi = 'upi://pay?pa=cscsmartseva@upi&pn=CSC%20Smart%20Seva&am=' + am + '&cu=INR&tn=' + encodeURIComponent(info.application_id);\nreturn [{ json: { ...info, payment_url: upi, order_id: '', rzp_fail: false, mock: true } }];"
+   },
+   "name": "Mock Link",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst info = $json;\nlet msg = '\\ud83d\\udcb3 *Payment Link* - ' + (info.service_id || '') + '\\n\\n';\nmsg += '\\ud83d\\udcc4 Application ID: ' + info.application_id + '\\n';\nmsg += '\\ud83d\\udcb0 Amount: Rs ' + info.total + '\\n';\nmsg += '   (Govt fee: Rs ' + info.gov_fee + ' + Service: Rs ' + info.service_charge + ' + GST: Rs ' + info.gst + ')\\n\\n';\nif (info.rzp_fail) {\n  msg += '\\u26a0\\ufe0f Payment gateway error. Operator aapse jaldi contact karega.\\nHUMAN likhkar baat kar sakte hain.';\n} else if (info.mock) {\n  msg += 'Ye TEST MODE link hai:\\n' + info.payment_url + '\\n\\n';\n  msg += 'Payment ke baad automatic verification hogi (webhook). Agar 10 minute mein status update na ho to STATUS likhein.\\n\\n';\n  msg += '\\u26a0\\ufe0f Note: Payment sirf official link se karein. Screenshot par bharosa na karein.';\n} else {\n  msg += 'Payment yahan se karein:\\n' + (info.payment_url || info.order_id) + '\\n\\nPayment ke baad status automatic update hoga.';\n}\nreturn [{ json: { reply: msg, phone: info.phone, payment_id: info.payment_id } }];"
+   },
+   "name": "Payment Message",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Get All Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get All Config": {
+   "main": [
+    [
+     {
+      "node": "Config Map",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config Map": {
+   "main": [
+    [
+     {
+      "node": "Create Payment Record",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Create Payment Record": {
+   "main": [
+    [
+     {
+      "node": "Build Payment Info",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Build Payment Info": {
+   "main": [
+    [
+     {
+      "node": "Razorpay?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Razorpay?": {
+   "main": [
+    [
+     {
+      "node": "Create RZP Order",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Mock Link",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Create RZP Order": {
+   "main": [
+    [
+     {
+      "node": "RZP Link",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mock Link": {
+   "main": [
+    [
+     {
+      "node": "Payment Message",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "RZP Link": {
+   "main": [
+    [
+     {
+      "node": "Payment Message",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

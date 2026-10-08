@@ -1,0 +1,5 @@
+# SERVICES STATUS @ 20261008-124422
+n8n:      200
+agent:    200
+bridge:   {"connected":true,"user":"917668483205:32@s.whatsapp.net","hasQr":false,"qrAgeSec":null,"qrFile":"/home/z/my-project/download/whatsapp-qr.png","lastError":null,"uptimeSec":3564,"forwarded":0,"sent":0}
+portal:   200

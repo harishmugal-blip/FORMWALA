@@ -1,0 +1,236 @@
+{
+ "id": "3c5c2525-0000-4000-8000-000000000025",
+ "name": "CSC 25 - Unknown Service Researcher",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst j = $json;\nconst msg = String(j.message || '').slice(0, 400);\nconst prompt = 'User ne India ke CSC (Common Service Center) WhatsApp assistant se ye request ki: \"' + msg + '\"\\n\\n'\n+ 'Ye request 14 standard services (PAN, ITR, GST, income/caste/domicile certificate, Voter ID, Ayushman, E-Shram, scholarship, govt job form) mein fit nahi hui.\\n'\n+ 'Analyze karo: ye kaunsi government/private service ho sakti hai? CSC ecosystem mein available hai ya nahi?\\n\\n'\n+ 'Sirf strict JSON return karo (no markdown):\\n'\n+ '{\"detected_service\":\"<short name>\",\"likely_available\":\"YES|NO|MAYBE\",\"how_to_do\":\"<1 line Hinglish guidance>\",\"confidence\":0.0}';\nreturn [{ json: { prompt, phone: j.phone, message: msg } }];"
+   },
+   "name": "Build Research Prompt",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "openRouterApi",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ model: 'inclusionai/ling-3.0-flash-sante:free', max_tokens: 700, temperature: 0.3, messages: [{ role: 'user', content: $json.prompt }] }) }}",
+    "options": {
+     "response": {
+      "response": {
+       "neverError": true
+      }
+     },
+     "timeout": 90000
+    }
+   },
+   "name": "Ask AI",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    0,
+    0
+   ],
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $json;\nconst t = $('Build Research Prompt').first().json;\nlet ai = { detected_service: 'unknown', likely_available: 'MAYBE', how_to_do: '', confidence: 0 };\ntry {\n  const raw = (r.choices && r.choices[0] && r.choices[0].message && r.choices[0].message.content || '').replace(/```json|```/g, '').trim();\n  const m = raw.match(/\\{[\\s\\S]*\\}/);\n  if (m) ai = { ...ai, ...JSON.parse(m[0]) };\n} catch (e) {}\nlet msg = '🤔 Aapki request (\"' + t.message.slice(0, 80) + '\") humari 14 services mein nahi hai.\\n\\n';\nif (ai.detected_service && ai.detected_service !== 'unknown') {\n  msg += '🔍 AI analysis: \"' + ai.detected_service + '\" lag rahi hai.\\n';\n  msg += 'Available: ' + ai.likely_available + '\\n';\n  if (ai.how_to_do) msg += '💡 ' + ai.how_to_do + '\\n\\n';\n}\nmsg += 'Aapki request team ko note kar li gayi hai - wo is service add karne ke baare mein sochenge.\\n\\n';\nmsg += 'Filhaal ye services available hain: PAN Card, ITR Filing, GST Reg, Income/Caste/Domicile Certificate, Voter ID, Ayushman, E-Shram, Scholarship, Govt Job Form.\\nInme se koi chahiye to naam type karein. Ya HUMAN likhkar operator se baat karein.';\nreturn [{ json: { phone: t.phone, reply: msg, ai, user_message: t.message, research_id: 'RES' + Date.now().toString(36).toUpperCase() } }];"
+   },
+   "name": "Parse Research",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "service_research"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "research_id": "={{ $json.research_id }}",
+      "phone": "={{ $json.phone }}",
+      "user_message": "={{ $json.user_message }}",
+      "ai_analysis": "={{ JSON.stringify($json.ai) }}",
+      "proposed_service": "={{ $json.ai.detected_service || 'unknown' }}",
+      "status": "NEW",
+      "created_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Save Research",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2424-0000-4000-8000-000000000024",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "event_type": "UNKNOWN_SERVICE_RESEARCH",
+      "actor": "AI",
+      "phone": "={{ $json.phone }}",
+      "payload": "={{ JSON.stringify({ message: $json.user_message, detected: $json.ai.detected_service }) }}"
+     }
+    }
+   },
+   "name": "Audit Research",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const p = $('Parse Research').first().json;\nreturn [{ json: { reply: p.reply, phone: p.phone } }];"
+   },
+   "name": "Final Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const p = $('Parse Research').first().json;\nreturn [{ json: { event_type: 'UNKNOWN_SERVICE_RESEARCH', actor: 'AI', phone: p.phone, payload: JSON.stringify({ message: p.user_message, detected: p.ai.detected_service }) } }];"
+   },
+   "name": "Prep Audit Research",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -120,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Build Research Prompt",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Build Research Prompt": {
+   "main": [
+    [
+     {
+      "node": "Ask AI",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Ask AI": {
+   "main": [
+    [
+     {
+      "node": "Parse Research",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Parse Research": {
+   "main": [
+    [
+     {
+      "node": "Save Research",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Save Research": {
+   "main": [
+    [
+     {
+      "node": "Prep Audit Research",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Audit Research": {
+   "main": [
+    [
+     {
+      "node": "Final Reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep Audit Research": {
+   "main": [
+    [
+     {
+      "node": "Audit Research",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

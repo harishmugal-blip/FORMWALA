@@ -1,0 +1,1612 @@
+{
+ "id": "3c5c0004-0000-4000-8000-000000000001",
+ "name": "CSC 01 - WhatsApp Main Router v2",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "whatsapp",
+    "responseMode": "responseNode",
+    "options": {}
+   },
+   "name": "WhatsApp Webhook",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "webhookId": "whk-whatsapp-post",
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "httpMethod": "GET",
+    "path": "whatsapp",
+    "responseMode": "responseNode",
+    "options": {}
+   },
+   "name": "WhatsApp Verify",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "webhookId": "whk-whatsapp-get",
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "text",
+    "responseBody": "={{ $json.query['hub.challenge'] || 'ok' }}"
+   },
+   "name": "Return Challenge",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst body = $json.body || $json;\nlet phone = '', name = '', text = '', msgType = 'unknown';\nlet media = null;\ntry {\n  const entry = body.entry && body.entry[0];\n  const change = entry && entry.changes && entry.changes[0];\n  const value = change && change.value;\n  const msg = value && value.messages && value.messages[0];\n  if (msg) {\n    phone = msg.from || '';\n    msgType = msg.type || 'text';\n    const contact = value.contacts && value.contacts[0];\n    name = (contact && contact.profile && contact.profile.name) || 'Customer';\n    if (msgType === 'text') text = msg.text && msg.text.body || '';\n    else if (msgType === 'image') { media = { id: msg.image && msg.image.id, mime: msg.image && msg.image.mime_type, filename: '' }; }\n    else if (msgType === 'document') { media = { id: msg.document && msg.document.id, mime: msg.document && msg.document.mime_type, filename: msg.document && msg.document.filename }; }\n    else if (msgType === 'audio' || msgType === 'video' || msgType === 'sticker') { media = { id: (msg[msgType] || {}).id, mime: (msg[msgType] || {}).mime_type, filename: '' }; }\n    else if (msgType === 'button') { text = (msg.button || {}).text || ''; }\n    else if (msgType === 'interactive') {\n      const it = msg.interactive || {};\n      text = (it.button_reply && it.button_reply.title) || (it.list_reply && it.list_reply.title) || '';\n    }\n  }\n} catch (e) {}\nreturn [{ json: { phone: phone || 'unknown', name: name || 'Customer', message: text, media, msg_type: media ? 'media' : 'text', is_media: !!media, wa_id: $json.body ? 'meta' : 'test' } }];"
+   },
+   "name": "Normalize Message",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "message_log"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $json.phone }}",
+      "direction": "IN",
+      "message_type": "={{ $json.msg_type }}",
+      "body": "={{ ($json.message || ($json.media ? 'media:' + $json.media.id : '')).slice(0, 1000) }}",
+      "wa_message_id": "",
+      "status": "RECEIVED",
+      "created_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Log Incoming Msg",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "conversation_state"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "phone",
+       "condition": "eq",
+       "keyValue": "={{ $('Normalize Message').first().json.phone }}"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Conv State",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=ADMIN_WHATSAPP_NUMBER"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Admin No",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=WHATSAPP_PHONE_NUMBER_ID"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Phone ID",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=WHATSAPP_ACCESS_TOKEN"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get WA Token",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst n = $('Normalize Message').first().json;\nconst state = $('Get Conv State').first().json || {};\nconst adminRow = $('Get Admin No').first().json || {};\nconst admin = adminRow.config_value || '';\nconst phone = n.phone;\nconst isAdmin = admin !== 'SET_ADMIN_NUMBER' && admin && phone === admin;\nlet ctx = {};\ntry { ctx = JSON.parse(state.context_data || '{}'); } catch (e) {}\nconst handoff = (state.handoff_active || 'FALSE') === 'TRUE';\nconst st = state.state || '';\nconst up = String(n.message || '').toUpperCase();\n\nlet route = 'ai';\nconst wantsStatus = /STATUS|CSC-\\\\d{4}/.test(up);\nconst wantsHuman = /HUMAN|AGENT|OPERATOR/.test(up);\nif (isAdmin) route = 'operator_cmd';\nelse if (handoff) route = 'handoff_fwd';\nelse if (wantsHuman) route = 'human_takeover';\nelse if (wantsStatus) route = 'ai';\nelse if (n.is_media) route = 'media';\nelse if (st === 'FIELDS') route = 'fields';\nelse if (st === 'DOCS') route = 'docs_text';\nelse if (st === 'PAYMENT') route = 'payment_wait';\nelse if (st === 'NEW' && ctx.pending_service && /^(CONFIRM|CONFIRM KARO|HAAN|HAANJI|YES|OK|OKAY|THEEK|THIK|SAHI|PAKKA|1)\\b/.test(up)) route = 'start_service';\nreturn [{ json: { route, phone, name: n.name, message: n.message, media: n.media, state: st, pending_service: ctx.pending_service || '' } }];"
+   },
+   "name": "Route Decision",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "rules": {
+     "values": [
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "rr0",
+          "leftValue": "={{ $json.route }}",
+          "rightValue": "operator_cmd",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "operator_cmd"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "rr1",
+          "leftValue": "={{ $json.route }}",
+          "rightValue": "handoff_fwd",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "handoff_fwd"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "rr2",
+          "leftValue": "={{ $json.route }}",
+          "rightValue": "media",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "media"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "rr3",
+          "leftValue": "={{ $json.route }}",
+          "rightValue": "fields",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "fields"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "rr4",
+          "leftValue": "={{ $json.route }}",
+          "rightValue": "docs_text",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "docs_text"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "rr5",
+          "leftValue": "={{ $json.route }}",
+          "rightValue": "payment_wait",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "payment_wait"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "rr6",
+          "leftValue": "={{ $json.route }}",
+          "rightValue": "start_service",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "start_service"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "rr7",
+          "leftValue": "={{ $json.route }}",
+          "rightValue": "ai",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "ai"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "rr8",
+          "leftValue": "={{ $json.route }}",
+          "rightValue": "human_takeover",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "human_takeover"
+      }
+     ]
+    },
+    "options": {
+     "fallbackOutput": "extra",
+     "renameFallbackOutput": "ai2"
+    }
+   },
+   "name": "Route",
+   "type": "n8n-nodes-base.switch",
+   "typeVersion": 3.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c1717-0000-4000-8000-000000000017",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Decision').first().json.phone }}",
+      "name": "={{ $('Route Decision').first().json.name }}",
+      "message": "={{ $('Route Decision').first().json.message }}"
+     }
+    }
+   },
+   "name": "Run Operator Assistant",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $json;\nreturn [{ json: { reply: r.reply || 'Command process ho gaya.', phone: $('Normalize Message').first().json.phone } }];"
+   },
+   "name": "BR Operator",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2222-0000-4000-8000-000000000022",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Decision').first().json.phone }}",
+      "name": "={{ $('Route Decision').first().json.name }}",
+      "mode": "customer_message",
+      "message": "={{ $('Route Decision').first().json.message }}"
+     }
+    }
+   },
+   "name": "Run Handoff Forward",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $json;\nreturn [{ json: { reply: r.reply || 'Operator ko forward ho gaya.', phone: $('Normalize Message').first().json.phone } }];"
+   },
+   "name": "BR Handoff",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c0808-0000-4000-8000-000000000008",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Decision').first().json.phone }}",
+      "name": "={{ $('Route Decision').first().json.name }}",
+      "message": "",
+      "media": "={{ JSON.stringify($('Normalize Message').first().json.media || {}) }}"
+     }
+    }
+   },
+   "name": "Run Doc Collector (Media)",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $json;\nreturn [{ json: { reply: r.reply || 'Document process nahi hua. Dobara try karein ya HUMAN likhein.', phone: $('Normalize Message').first().json.phone } }];"
+   },
+   "name": "BR Media",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c0606-0000-4000-8000-000000000006",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Decision').first().json.phone }}",
+      "name": "={{ $('Route Decision').first().json.name }}",
+      "message": "={{ $('Route Decision').first().json.message }}",
+      "service_id": "={{ $('Get Conv State').first().json.service_id || '' }}"
+     }
+    }
+   },
+   "name": "Run Field Collector",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $json;\nreturn [{ json: { reply: r.reply || 'Kuch galat ho gaya. Dobara try karein ya HUMAN likhein.', phone: $('Normalize Message').first().json.phone } }];"
+   },
+   "name": "BR Fields",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c0808-0000-4000-8000-000000000008",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Decision').first().json.phone }}",
+      "name": "={{ $('Route Decision').first().json.name }}",
+      "message": "={{ $('Route Decision').first().json.message }}",
+      "media": "={}"
+     }
+    }
+   },
+   "name": "Run Doc Collector (Text)",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $json;\nreturn [{ json: { reply: r.reply || 'Documents ka status check ho gaya.', phone: $('Normalize Message').first().json.phone } }];"
+   },
+   "name": "BR Docs Text",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c0002-0000-4000-8000-000000000004",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Decision').first().json.phone }}",
+      "name": "={{ $('Route Decision').first().json.name }}",
+      "consent_given": true
+     }
+    }
+   },
+   "name": "Run Profile Engine",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c0606-0000-4000-8000-000000000006",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Decision').first().json.phone }}",
+      "name": "={{ $('Route Decision').first().json.name }}",
+      "message": "={{ $('Route Decision').first().json.message }}",
+      "service_id": "={{ $('Route Decision').first().json.pending_service }}"
+     }
+    }
+   },
+   "name": "Start Field Collection",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $json;\nreturn [{ json: { reply: r.reply || 'Profile ban gaya. Aage badhte hain!', phone: $('Route Decision').first().json.phone } }];"
+   },
+   "name": "BR Start",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c0003-0000-4000-8000-000000000002",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Decision').first().json.phone }}",
+      "name": "={{ $('Route Decision').first().json.name }}",
+      "message": "={{ $('Route Decision').first().json.message }}"
+     }
+    }
+   },
+   "name": "AI Intent (CSC 02)",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-IntentStatus",
+       "leftValue": "={{ $json.intent }}",
+       "rightValue": "STATUS_CHECK",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Intent Status?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c1919-0000-4000-8000-000000000019",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Decision').first().json.phone }}",
+      "name": "={{ $('Route Decision').first().json.name }}",
+      "message": "={{ $('Route Decision').first().json.message }}"
+     }
+    }
+   },
+   "name": "Run Status Engine",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $json;\nreturn [{ json: { reply: r.reply || 'Status nahi mila.', phone: $('Route Decision').first().json.phone } }];"
+   },
+   "name": "BR Status",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-IntentHuman",
+       "leftValue": "={{ $('AI Intent (CSC 02)').first().json.intent }}",
+       "rightValue": "HUMAN_AGENT",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Intent Human?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2222-0000-4000-8000-000000000022",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Decision').first().json.phone }}",
+      "name": "={{ $('Route Decision').first().json.name }}",
+      "mode": "takeover",
+      "message": "={{ $('Route Decision').first().json.message }}"
+     }
+    }
+   },
+   "name": "Run Handoff Takeover",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $json;\nreturn [{ json: { reply: r.reply || 'Operator se connect ho rahe hain.', phone: $('Route Decision').first().json.phone } }];"
+   },
+   "name": "BR Human",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-ServiceMatched",
+       "leftValue": "={{ $('AI Intent (CSC 02)').first().json.service_id }}",
+       "rightValue": "UNKNOWN",
+       "operator": {
+        "type": "string",
+        "operation": "notEquals"
+       }
+      },
+      {
+       "id": "c1-ServiceMatched",
+       "leftValue": "={{ $('AI Intent (CSC 02)').first().json.confidence }}",
+       "rightValue": "0.6",
+       "operator": {
+        "type": "number",
+        "operation": "gte"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Service Matched?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "upsert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "conversation_state"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "phone",
+       "condition": "eq",
+       "keyValue": "={{ $('Route Decision').first().json.phone }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Decision').first().json.phone }}",
+      "state": "NEW",
+      "service_id": "={{ $('AI Intent (CSC 02)').first().json.service_id }}",
+      "context_data": "={{ JSON.stringify({ pending_service: $('AI Intent (CSC 02)').first().json.service_id }) }}",
+      "handoff_active": "FALSE",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Save Pending Service",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $('AI Intent (CSC 02)').first().json;\nreturn [{ json: { reply: r.reply, phone: $('Route Decision').first().json.phone } }];"
+   },
+   "name": "BR Service Confirm",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2525-0000-4000-8000-000000000025",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Route Decision').first().json.phone }}",
+      "name": "={{ $('Route Decision').first().json.name }}",
+      "message": "={{ $('Route Decision').first().json.message }}"
+     }
+    }
+   },
+   "name": "Run Researcher",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $json;\nreturn [{ json: { reply: r.reply || 'Service list bhej raha hoon...', phone: $('Route Decision').first().json.phone } }];"
+   },
+   "name": "BR Research",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst pid = $('Get Phone ID').first().json.config_value || '';\nconst token = $('Get WA Token').first().json.config_value || '';\nconst ready = pid && token && !pid.startsWith('SET_') && !token.startsWith('SET_');\nreturn [{ json: { ready, pid, token, to: $json.phone, reply: String($json.reply || '').slice(0, 4096) } }];"
+   },
+   "name": "Build Send Payload",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "=https://graph.facebook.com/v21.0/{{ $('Build Send Payload').first().json.pid }}/messages",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{ $('Build Send Payload').first().json.token }}"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', to: $('Build Send Payload').first().json.to, type: 'text', text: { body: $('Build Send Payload').first().json.reply } }) }}",
+    "options": {
+     "response": {
+      "response": {
+       "neverError": true
+      }
+     },
+     "timeout": 30000
+    }
+   },
+   "name": "Send WhatsApp Reply",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    0,
+    0
+   ],
+   "onError": "continueRegularOutput",
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify({ ok: true, sent_via: $('Build Send Payload').first().json.ready ? 'meta' : 'MOCK(creds-not-set)', reply: $('Build Send Payload').first().json.reply }) }}"
+   },
+   "name": "Respond 200",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const p = $('Route Decision').first().json;\nreturn [{ json: { phone: p.phone, name: p.name, message: p.message, mode: 'customer_message' } }];"
+   },
+   "name": "Prep Handoff Forward",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -120,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const p = $('Route Decision').first().json;\nreturn [{ json: { phone: p.phone, name: p.name, message: p.message, mode: 'takeover' } }];"
+   },
+   "name": "Prep Handoff Takeover",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -120,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const p = $('Route Decision').first().json;\nreturn [{ json: { phone: p.phone, name: p.name, message: p.message, service_id: p.pending_service || '' } }];"
+   },
+   "name": "Prep Start Field Collection",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -120,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "WhatsApp Webhook": {
+   "main": [
+    [
+     {
+      "node": "Normalize Message",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "WhatsApp Verify": {
+   "main": [
+    [
+     {
+      "node": "Return Challenge",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Normalize Message": {
+   "main": [
+    [
+     {
+      "node": "Log Incoming Msg",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Log Incoming Msg": {
+   "main": [
+    [
+     {
+      "node": "Get Conv State",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Conv State": {
+   "main": [
+    [
+     {
+      "node": "Get Admin No",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Admin No": {
+   "main": [
+    [
+     {
+      "node": "Get Phone ID",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Phone ID": {
+   "main": [
+    [
+     {
+      "node": "Get WA Token",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get WA Token": {
+   "main": [
+    [
+     {
+      "node": "Route Decision",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Route Decision": {
+   "main": [
+    [
+     {
+      "node": "Route",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Route": {
+   "main": [
+    [
+     {
+      "node": "Run Operator Assistant",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Prep Handoff Forward",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Run Doc Collector (Media)",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Run Field Collector",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Run Doc Collector (Text)",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Run Field Collector",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Run Profile Engine",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "AI Intent (CSC 02)",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Prep Handoff Takeover",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Run Operator Assistant": {
+   "main": [
+    [
+     {
+      "node": "BR Operator",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Run Handoff Forward": {
+   "main": [
+    [
+     {
+      "node": "BR Handoff",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Run Doc Collector (Media)": {
+   "main": [
+    [
+     {
+      "node": "BR Media",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Run Field Collector": {
+   "main": [
+    [
+     {
+      "node": "BR Fields",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Run Doc Collector (Text)": {
+   "main": [
+    [
+     {
+      "node": "BR Docs Text",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Run Profile Engine": {
+   "main": [
+    [
+     {
+      "node": "Prep Start Field Collection",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Start Field Collection": {
+   "main": [
+    [
+     {
+      "node": "BR Start",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "AI Intent (CSC 02)": {
+   "main": [
+    [
+     {
+      "node": "Intent Status?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Intent Status?": {
+   "main": [
+    [
+     {
+      "node": "Run Status Engine",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Intent Human?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Run Status Engine": {
+   "main": [
+    [
+     {
+      "node": "BR Status",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Intent Human?": {
+   "main": [
+    [
+     {
+      "node": "Prep Handoff Takeover",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Service Matched?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Run Handoff Takeover": {
+   "main": [
+    [
+     {
+      "node": "BR Human",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Service Matched?": {
+   "main": [
+    [
+     {
+      "node": "Save Pending Service",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Run Researcher",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Save Pending Service": {
+   "main": [
+    [
+     {
+      "node": "BR Service Confirm",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Run Researcher": {
+   "main": [
+    [
+     {
+      "node": "BR Research",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "BR Operator": {
+   "main": [
+    [
+     {
+      "node": "Build Send Payload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "BR Handoff": {
+   "main": [
+    [
+     {
+      "node": "Build Send Payload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "BR Media": {
+   "main": [
+    [
+     {
+      "node": "Build Send Payload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "BR Fields": {
+   "main": [
+    [
+     {
+      "node": "Build Send Payload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "BR Docs Text": {
+   "main": [
+    [
+     {
+      "node": "Build Send Payload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "BR Start": {
+   "main": [
+    [
+     {
+      "node": "Build Send Payload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "BR Status": {
+   "main": [
+    [
+     {
+      "node": "Build Send Payload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "BR Human": {
+   "main": [
+    [
+     {
+      "node": "Build Send Payload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "BR Service Confirm": {
+   "main": [
+    [
+     {
+      "node": "Build Send Payload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "BR Research": {
+   "main": [
+    [
+     {
+      "node": "Build Send Payload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Build Send Payload": {
+   "main": [
+    [
+     {
+      "node": "Send WhatsApp Reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Send WhatsApp Reply": {
+   "main": [
+    [
+     {
+      "node": "Respond 200",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep Handoff Forward": {
+   "main": [
+    [
+     {
+      "node": "Run Handoff Forward",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep Handoff Takeover": {
+   "main": [
+    [
+     {
+      "node": "Run Handoff Takeover",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep Start Field Collection": {
+   "main": [
+    [
+     {
+      "node": "Start Field Collection",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

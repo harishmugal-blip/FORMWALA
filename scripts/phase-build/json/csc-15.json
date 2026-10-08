@@ -1,0 +1,126 @@
+{
+ "id": "3c5c1515-0000-4000-8000-000000000015",
+ "name": "CSC 15 - Receipt Sender",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst t = $json;\nconst num = t.application_number || 'CSC-2026-PENDING';\nconst total = Number(t.total || 0);\nlet msg = '\\u2705 *Payment Verify Ho Gaya!* \\ud83c\\udf89\\n\\n';\nmsg += '\\ud83d\\udccb Application Number: *' + num + '*\\n';\nmsg += '\\ud83e\\uddfe Payment Receipt:\\n';\nmsg += '   Govt Fee: Rs ' + Number(t.gov_fee || 0) + '\\n';\nmsg += '   Service Charge: Rs ' + Number(t.service_charge || 0) + '\\n';\nmsg += '   GST: Rs ' + Number(t.gst || 0) + '\\n';\nmsg += '   *Total: Rs ' + total + '*\\n';\nif (t.transaction_id) msg += '\\ud83d\\udcb3 Txn ID: ' + t.transaction_id + '\\n';\nmsg += '\\n\\ud83d\\udcc5 Date: ' + new Date().toISOString().slice(0, 10) + '\\n';\nmsg += '\\nAb aapka application CSC operator ko assign ho gaya hai.\\n';\nmsg += 'Portal par submit hone ke baad aapko confirmation milega.\\n\\n';\nmsg += 'Status dekhne ke liye STATUS likhein. \\ud83d\\ude4f Dhanyawad!';\nreturn [{ json: { phone: t.phone, message: msg, template: 'RECEIPT', related_id: t.application_id || num } }];"
+   },
+   "name": "Build Receipt",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "action": "send_whatsapp",
+      "phone": "={{ $json.phone }}",
+      "message": "={{ $json.message }}",
+      "template": "={{ $json.template }}",
+      "related_id": "={{ $json.related_id }}"
+     }
+    }
+   },
+   "name": "Send Via Notif",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "receipts"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "receipt_id": "={{ 'RCPT' + Date.now().toString(36).toUpperCase() }}",
+      "application_id": "={{ $('Build Receipt').first().json.related_id }}",
+      "application_number": "={{ $('Build Receipt').first().json.phone ? ($('Trigger').first().json.application_number || '') : '' }}",
+      "amount": "={{ $('Trigger').first().json.total || 0 }}",
+      "payload": "={{ JSON.stringify($('Build Receipt').first().json) }}",
+      "created_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Save Receipt",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Build Receipt",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Build Receipt": {
+   "main": [
+    [
+     {
+      "node": "Send Via Notif",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Send Via Notif": {
+   "main": [
+    [
+     {
+      "node": "Save Receipt",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

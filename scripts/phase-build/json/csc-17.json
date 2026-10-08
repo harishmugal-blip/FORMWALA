@@ -1,0 +1,976 @@
+{
+ "id": "3c5c1717-0000-4000-8000-000000000017",
+ "name": "CSC 17 - Operator Portal Assistant",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst j = $json;\nconst msg = String(j.message || '').trim();\nconst up = msg.toUpperCase();\nlet cmd = 'HELP', arg = '', note = '';\nif (/^DONE\\s+\\S+/.test(up)) { cmd = 'DONE'; arg = up.replace(/^DONE\\s+/, '').split('\\s')[0]; }\nelse if (/^ISSUE\\s+\\S+/.test(up)) { const parts = msg.split(/\\s+/); cmd = 'ISSUE'; arg = (parts[1] || '').toUpperCase(); note = parts.slice(2).join(' '); }\nelse if (/^PAID\\s+\\S+/.test(up)) { cmd = 'PAID'; arg = up.replace(/^PAID\\s+/, '').split('\\s')[0]; }\nelse if (/^QUEUE$/.test(up)) cmd = 'QUEUE';\nelse if (/^RESUME\\s+\\S+/.test(up)) { cmd = 'RESUME'; arg = msg.replace(/^RESUME\\s+/i, '').trim(); }\nelse if (/^HELP$/.test(up)) cmd = 'HELP';\nreturn [{ json: { cmd, arg, note, phone: j.phone, message: msg } }];"
+   },
+   "name": "Parse Command",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "rules": {
+     "values": [
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "k0",
+          "leftValue": "={{ $json.cmd }}",
+          "rightValue": "DONE",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "done"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "k1",
+          "leftValue": "={{ $json.cmd }}",
+          "rightValue": "ISSUE",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "issue"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "k2",
+          "leftValue": "={{ $json.cmd }}",
+          "rightValue": "QUEUE",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "queue"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "k3",
+          "leftValue": "={{ $json.cmd }}",
+          "rightValue": "PAID",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "paid"
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "loose",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "k4",
+          "leftValue": "={{ $json.cmd }}",
+          "rightValue": "RESUME",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       },
+       "renameOutput": true,
+       "outputKey": "resume"
+      }
+     ]
+    },
+    "options": {
+     "fallbackOutput": "extra",
+     "renameFallbackOutput": "help"
+    }
+   },
+   "name": "Route Command",
+   "type": "n8n-nodes-base.switch",
+   "typeVersion": 3.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c1818-0000-4000-8000-000000000018",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "application_number": "={{ $('Parse Command').first().json.arg }}",
+      "note": "Portal submission confirmed by operator"
+     }
+    }
+   },
+   "name": "Mark Submitted",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $('Mark Submitted').first().json;\nconst p = $('Parse Command').first().json;\nreturn [{ json: { reply: r.ok ? ('\\u2705 ' + r.application_number + ' SUBMITTED mark kiya gaya. Customer ko notification chala gaya.') : ('\\u26a0\\ufe0f Application ' + p.arg + ' nahi mila. Queue dekhne ke liye QUEUE likhein.'), phone: p.phone } }];"
+   },
+   "name": "Done Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst p = $json;\nreturn [{ json: { cmd: 'ISSUE', arg: p.arg, note: p.note || 'Issue reported', phone: p.phone } }];"
+   },
+   "name": "Issue Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_number",
+       "condition": "eq",
+       "keyValue": "={{ $('Issue Reply').first().json.arg }}"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Issue App",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "operator_tasks"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $('Get Issue App').first().json.application_id || 'none' }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "status": "ISSUE",
+      "note": "={{ $('Issue Reply').first().json.note }}",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Update Task Issue",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $('Get Issue App').first().json.application_id || 'none' }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "status": "ISSUE_REPORTED",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Mark App Issue",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "action": "send_whatsapp",
+      "phone": "={{ $('Get Issue App').first().json.customer_phone || '' }}",
+      "message": "=⚠️ Aapke application {{ $('Issue Reply').first().json.arg }} mein thodi dikkat aayi hai. Hamari team jaldi aapse contact karegi. (Note: {{ $('Issue Reply').first().json.note }})",
+      "template": "ISSUE_NOTICE",
+      "related_id": "={{ $('Get Issue App').first().json.application_id }}"
+     }
+    }
+   },
+   "name": "Notify Customer Issue",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ],
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst p = $('Parse Command').first().json;\nreturn [{ json: { reply: '\\u2705 Issue log ho gayi: ' + p.arg + ' (' + (p.note || 'no note') + '). Customer ko inform kar diya.', phone: p.phone } }];"
+   },
+   "name": "Issue Confirm",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "operator_tasks"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "status",
+       "condition": "eq",
+       "keyValue": "=PENDING"
+      }
+     ]
+    },
+    "returnAll": true
+   },
+   "name": "Get Pending Tasks",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "returnAll": true,
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst p = $('Parse Command').first().json;\nlet tasks = [];\ntry { tasks = $input.all().map(i => i.json).filter(t => t && t.task_id); } catch (e) {}\nif (!tasks.length) return [{ json: { reply: '\\u2705 Koi pending task nahi hai. Sab clear hai! \\ud83c\\udf89', phone: p.phone } }];\nlet msg = '\\ud83d\\udccb *PENDING TASKS (' + tasks.length + ')*\\n';\ntasks.slice(0, 15).forEach((t, i) => { msg += '\\n' + (i + 1) + '. ' + (t.application_number || t.application_id) + ' | ' + (t.status || '') + ' | ' + (t.created_at || '').slice(0, 10); });\nif (tasks.length > 15) msg += '\\n... aur ' + (tasks.length - 15) + ' tasks';\nreturn [{ json: { reply: msg, phone: p.phone } }];"
+   },
+   "name": "Queue Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_number",
+       "condition": "eq",
+       "keyValue": "={{ $('Parse Command').first().json.arg }}"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Paid App",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst app = $('Get Paid App').first().json;\nconst p = $('Parse Command').first().json;\nif (!app.application_id) return [{ json: { cmd: 'PAID_SKIP', phone: p.phone, arg: p.arg } }];\nreturn [{ json: { application_id: app.application_id, phone: p.phone, arg: p.arg } }];"
+   },
+   "name": "Manual Paid",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-AppFoundForPaid",
+       "leftValue": "={{ $json.application_id }}",
+       "rightValue": "",
+       "operator": {
+        "type": "string",
+        "operation": "notEmpty",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "App Found For Paid?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "payments"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $json.application_id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "status": "PAID",
+      "paid_at": "={{ $now.toISO() }}",
+      "gateway": "={{ $json.gateway || 'MANUAL' }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Confirm Payment",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $json.application_id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "status": "PAID",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Confirm App Paid",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "audit_log"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "event_id": "={{ 'AUD' + Date.now().toString(36).toUpperCase() }}",
+      "event_type": "MANUAL_PAYMENT_CONFIRM",
+      "actor": "={{ $('Parse Command').first().json.phone }}",
+      "phone": "={{ $('Parse Command').first().json.phone }}",
+      "application_id": "={{ $('Manual Paid').first().json.application_id }}",
+      "payload": "={{ JSON.stringify({ by: 'operator-command', mode: 'TEST-ONLY' }) }}",
+      "created_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Audit Manual Paid",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst p = $('Parse Command').first().json;\nreturn [{ json: { reply: '\\u2705 Payment manually confirm kiya: ' + p.arg + ' (audit log ho gaya). Ab DONE command se submission mark karein.', phone: p.phone } }];"
+   },
+   "name": "Paid Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst p = $('Parse Command').first().json;\nreturn [{ json: { reply: '\\u26a0\\ufe0f Application ' + p.arg + ' nahi mila. QUEUE likhkar sahi number dekhein.', phone: p.phone } }];"
+   },
+   "name": "Paid Not Found",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2222-0000-4000-8000-000000000022",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $('Parse Command').first().json.arg }}",
+      "mode": "resume"
+     }
+    }
+   },
+   "name": "Resume Handoff",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst p = $('Parse Command').first().json;\nreturn [{ json: { reply: '\\u2705 Bot resume ho gaya for ' + p.arg + '.', phone: p.phone } }];"
+   },
+   "name": "Resume Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst p = $('Parse Command').first().json;\nlet msg = '\\ud83d\\udc64\\u200d\\ud83d\\udcbc *Operator Commands*\\n\\n';\nmsg += 'DONE CSC-2026-XXXXXX \\u2192 portal submit mark\\n';\nmsg += 'ISSUE CSC-2026-XXXXXX [note] \\u2192 problem report\\n';\nmsg += 'QUEUE \\u2192 pending tasks\\n';\nmsg += 'PAID CSC-2026-XXXXXX \\u2192 manual payment confirm (TEST only)\\n';\nmsg += 'RESUME 91XXXXXXXXXX \\u2192 customer ka bot resume\\n';\nmsg += 'HELP \\u2192 ye list';\nreturn [{ json: { reply: msg, phone: p.phone } }];"
+   },
+   "name": "Help Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const p = $('Parse Command').first().json;\nreturn [{ json: { application_number: p.arg, note: 'Portal submission confirmed by operator' } }];"
+   },
+   "name": "Prep Mark Submitted",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -120,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const p = $('Parse Command').first().json;\nreturn [{ json: { phone: p.arg, mode: 'resume' } }];"
+   },
+   "name": "Prep Resume Handoff",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -120,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const app = $('Get Issue App').first().json;\nconst p = $('Parse Command').first().json;\nreturn [{ json: { phone: app.customer_phone || '', message: '\\u26a0\\ufe0f Aapke application ' + p.arg + ' mein thodi dikkat aayi hai. Hamari team jaldi aapse contact karegi. (Note: ' + (p.note || '') + ')', template: 'ISSUE_NOTICE', related_id: app.application_id || '' } }];"
+   },
+   "name": "Prep Notify Customer Issue",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -120,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Parse Command",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Parse Command": {
+   "main": [
+    [
+     {
+      "node": "Route Command",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Route Command": {
+   "main": [
+    [
+     {
+      "node": "Prep Mark Submitted",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Issue Reply",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Get Pending Tasks",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Get Paid App",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Prep Resume Handoff",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Help Reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mark Submitted": {
+   "main": [
+    [
+     {
+      "node": "Done Reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Issue Reply": {
+   "main": [
+    [
+     {
+      "node": "Get Issue App",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Issue App": {
+   "main": [
+    [
+     {
+      "node": "Update Task Issue",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Update Task Issue": {
+   "main": [
+    [
+     {
+      "node": "Mark App Issue",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mark App Issue": {
+   "main": [
+    [
+     {
+      "node": "Prep Notify Customer Issue",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Notify Customer Issue": {
+   "main": [
+    [
+     {
+      "node": "Issue Confirm",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Pending Tasks": {
+   "main": [
+    [
+     {
+      "node": "Queue Reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Paid App": {
+   "main": [
+    [
+     {
+      "node": "Manual Paid",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Manual Paid": {
+   "main": [
+    [
+     {
+      "node": "App Found For Paid?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "App Found For Paid?": {
+   "main": [
+    [
+     {
+      "node": "Confirm Payment",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Paid Not Found",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Confirm Payment": {
+   "main": [
+    [
+     {
+      "node": "Confirm App Paid",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Confirm App Paid": {
+   "main": [
+    [
+     {
+      "node": "Audit Manual Paid",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Audit Manual Paid": {
+   "main": [
+    [
+     {
+      "node": "Paid Reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Resume Handoff": {
+   "main": [
+    [
+     {
+      "node": "Resume Reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep Mark Submitted": {
+   "main": [
+    [
+     {
+      "node": "Mark Submitted",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep Resume Handoff": {
+   "main": [
+    [
+     {
+      "node": "Resume Handoff",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep Notify Customer Issue": {
+   "main": [
+    [
+     {
+      "node": "Notify Customer Issue",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

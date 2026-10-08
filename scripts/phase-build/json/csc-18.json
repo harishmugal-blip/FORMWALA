@@ -1,0 +1,441 @@
+{
+ "id": "3c5c1818-0000-4000-8000-000000000018",
+ "name": "CSC 18 - Submission Confirmer",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_number",
+       "condition": "eq",
+       "keyValue": "={{ $json.application_number }}"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get App",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-AppFound",
+       "leftValue": "={{ $json.application_id }}",
+       "rightValue": "",
+       "operator": {
+        "type": "string",
+        "operation": "notEmpty",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "App Found?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nreturn [{ json: { ok: false, error: 'application not found' } }];"
+   },
+   "name": "Not Found",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $json.application_id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "status": "SUBMITTED",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Set Submitted",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "application_status_history"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "application_id": "={{ $('Get App').first().json.application_id }}",
+      "application_number": "={{ $('Get App').first().json.application_number }}",
+      "old_status": "PAID",
+      "new_status": "SUBMITTED",
+      "note": "={{ $('Trigger').first().json.note || 'Operator confirmed portal submission' }}",
+      "created_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "History Submitted",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "operator_tasks"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_id",
+       "condition": "eq",
+       "keyValue": "={{ $('Get App').first().json.application_id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "status": "DONE",
+      "updated_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Close Task",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "audit_log"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "event_id": "={{ 'AUD' + Date.now().toString(36).toUpperCase() }}",
+      "event_type": "PORTAL_SUBMITTED",
+      "actor": "OPERATOR",
+      "phone": "={{ $('Get App').first().json.customer_phone }}",
+      "application_id": "={{ $('Get App').first().json.application_id }}",
+      "payload": "={{ JSON.stringify({ application_number: $('Get App').first().json.application_number, portal_mode: 'MOCK-or-LIVE' }) }}",
+      "created_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Audit Submitted",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": "3c5c2020-0000-4000-8000-000000000020",
+    "workflowInputs": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "action": "send_whatsapp",
+      "phone": "={{ $('Get App').first().json.customer_phone }}",
+      "message": "=\\ud83c\\udf89 *Badhai ho!* Aapka application {{ $('Get App').first().json.application_number }} government portal par submit ho gaya hai.\\n\\n\\ud83d\\udcc5 Submission date: {{ $now.toISO().slice(0, 10) }}\\n\\ud83d\\udce9 Government se acknowledgement/receipt milne par turant update milega.\\n\\nStatus dekhne ke liye STATUS likhein.",
+      "template": "SUBMITTED",
+      "related_id": "={{ $('Get App').first().json.application_id }}"
+     }
+    }
+   },
+   "name": "Notify Customer",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nreturn [{ json: { ok: true, application_number: $('Get App').first().json.application_number, status: 'SUBMITTED', phone: $('Trigger').first().json.phone || '' } }];"
+   },
+   "name": "Confirm Output",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const app = $('Get App').first().json;\nreturn [{ json: { phone: app.customer_phone, message: '\\ud83c\\udf89 Badhai ho! Aapka application ' + app.application_number + ' government portal par submit ho gaya hai.\\n\\nStatus dekhne ke liye STATUS likhein.', template: 'SUBMITTED', related_id: app.application_id } }];"
+   },
+   "name": "Prep Notify Customer",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -120,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "delete",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "conversation_state"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "phone",
+       "condition": "eq",
+       "keyValue": "={{ $('Get App').first().json.customer_phone }}"
+      }
+     ]
+    }
+   },
+   "name": "Clear Customer State",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Get App",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get App": {
+   "main": [
+    [
+     {
+      "node": "App Found?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "App Found?": {
+   "main": [
+    [
+     {
+      "node": "Set Submitted",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Not Found",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Set Submitted": {
+   "main": [
+    [
+     {
+      "node": "History Submitted",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "History Submitted": {
+   "main": [
+    [
+     {
+      "node": "Close Task",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Close Task": {
+   "main": [
+    [
+     {
+      "node": "Clear Customer State",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Audit Submitted": {
+   "main": [
+    [
+     {
+      "node": "Prep Notify Customer",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Notify Customer": {
+   "main": [
+    [
+     {
+      "node": "Confirm Output",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep Notify Customer": {
+   "main": [
+    [
+     {
+      "node": "Notify Customer",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Clear Customer State": {
+   "main": [
+    [
+     {
+      "node": "Audit Submitted",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

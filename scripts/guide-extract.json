@@ -1,0 +1,1256 @@
+[
+ {
+  "service": "PAN_CARD",
+  "name": "PAN Card",
+  "cat": "Identity",
+  "desc": "Naya PAN card ya correction (e-PAN + Physical). DOB proof ab Aadhaar ke alawa bhi zaroori",
+  "portal": "https://www.onlineservices.nsdl.com",
+  "fields": [
+   {
+    "key": "full_name",
+    "label": "Pura Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura naam (Aadhaar/voter ID ke hisaab se) likhein?"
+   },
+   {
+    "key": "father_name",
+    "label": "Pita ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapke pita ji ka pura naam likhein?"
+   },
+   {
+    "key": "dob",
+    "label": "Date of Birth",
+    "type": "DOB",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki date of birth likhein (DD/MM/YYYY format mein)?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   },
+   {
+    "key": "email",
+    "label": "Email",
+    "type": "EMAIL",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki email ID likhein (nahi hai toh SKIP likhein)?"
+   },
+   {
+    "key": "address",
+    "label": "Pura Address",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura address likhein (House/Street, City, District, State, PIN code)?"
+   },
+   {
+    "key": "aadhaar_number",
+    "label": "Aadhaar Number",
+    "type": "AADHAAR",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka Aadhaar number likhein (12 digit)?"
+   },
+   {
+    "key": "dob_proof_type",
+    "label": "DOB Proof Type",
+    "type": "CHOICE",
+    "req": "TRUE",
+    "opts": "MARKSHEET_10TH,BIRTH_CERTIFICATE,VOTER_ID,DRIVING_LICENCE,PASSPORT,AFFIDAVIT",
+    "q": "Aadhaar ke alawa DOB proof kaunsa document denge? (MARKSHEET_10TH / BIRTH_CERTIFICATE / VOTER_ID / DRIVING_LICENCE / PASSPORT / AFFIDAVIT)"
+   }
+  ],
+  "docs": [
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "photograph",
+    "label": "Passport Photo",
+    "req": "TRUE"
+   },
+   {
+    "key": "signature",
+    "label": "Signature",
+    "req": "TRUE"
+   },
+   {
+    "key": "dob_proof",
+    "label": "DOB Proof (10th Marksheet/Birth Cert)",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Form 49A fill\",\"Aadhaar + DOB proof upload\",\"e-KYC + e-Sign OTP\",\"Portal submission\",\"Acknowledgement receipt\"]"
+ },
+ {
+  "service": "ITR_FILING",
+  "name": "ITR Filing",
+  "cat": "Tax",
+  "desc": "Income Tax Return filing (Salaried / Business)",
+  "portal": "https://www.incometax.gov.in",
+  "fields": [
+   {
+    "key": "pan_number",
+    "label": "PAN Number",
+    "type": "PAN",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka PAN number likhein (jaise ABCPD1234F)?"
+   },
+   {
+    "key": "aadhaar_number",
+    "label": "Aadhaar Number",
+    "type": "AADHAAR",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka Aadhaar number likhein (12 digit)?"
+   },
+   {
+    "key": "bank_account",
+    "label": "Bank Account",
+    "type": "ACCOUNT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka bank account number likhein?"
+   },
+   {
+    "key": "ifsc",
+    "label": "IFSC Code",
+    "type": "IFSC",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Bank branch ka IFSC code likhein (jaise SBIN0001234)?"
+   },
+   {
+    "key": "income_details",
+    "label": "Income Details",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Apni income ka source aur approx amount likhein (jaise: Salary 350000/year)?"
+   },
+   {
+    "key": "form16",
+    "label": "Form 16",
+    "type": "CHOICE",
+    "req": "TRUE",
+    "opts": "HAAN,NAHI",
+    "q": "Kya aapke paas Form 16 hai? (HAAN / NAHI)"
+   }
+  ],
+  "docs": [
+   {
+    "key": "form16",
+    "label": "Form 16",
+    "req": "TRUE"
+   },
+   {
+    "key": "bank_statement",
+    "label": "Bank Statement",
+    "req": "TRUE"
+   },
+   {
+    "key": "pan_card",
+    "label": "PAN Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Document collection\",\"Income computation\",\"Return preparation\",\"E-verification\"]"
+ },
+ {
+  "service": "GST_REG",
+  "name": "GST Registration",
+  "cat": "Tax",
+  "desc": "Naya GST registration (Individual/Business)",
+  "portal": "https://www.gst.gov.in",
+  "fields": [
+   {
+    "key": "business_name",
+    "label": "Business ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapke business/firm ka naam likhein?"
+   },
+   {
+    "key": "pan_number",
+    "label": "PAN Number",
+    "type": "PAN",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka PAN number likhein (jaise ABCPD1234F)?"
+   },
+   {
+    "key": "address",
+    "label": "Pura Address",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura address likhein (House/Street, City, District, State, PIN code)?"
+   },
+   {
+    "key": "bank_account",
+    "label": "Bank Account",
+    "type": "ACCOUNT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka bank account number likhein?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   },
+   {
+    "key": "email",
+    "label": "Email",
+    "type": "EMAIL",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki email ID likhein (nahi hai toh SKIP likhein)?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "pan_card",
+    "label": "PAN Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "bank_statement",
+    "label": "Bank Statement",
+    "req": "TRUE"
+   },
+   {
+    "key": "photograph",
+    "label": "Passport Photo",
+    "req": "TRUE"
+   },
+   {
+    "key": "business_place_proof",
+    "label": "Business Place Proof",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"TRN generation\",\"Part-B filing\",\"ARN receipt\"]"
+ },
+ {
+  "service": "GST_RETURN",
+  "name": "GST Return Filing",
+  "cat": "Tax",
+  "desc": "Monthly/Quarterly GST return (GSTR-1/3B)",
+  "portal": "https://www.gst.gov.in",
+  "fields": [
+   {
+    "key": "gstin",
+    "label": "GSTIN",
+    "type": "GSTIN",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Agar GSTIN already hai toh likhein, warna SKIP likhein?"
+   },
+   {
+    "key": "sales_data",
+    "label": "Sales Data",
+    "type": "NUMBER",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Apni sales ki approx monthly value likhein (sirf number, jaise 150000)?"
+   },
+   {
+    "key": "purchase_data",
+    "label": "Purchase Data",
+    "type": "NUMBER",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Apni purchases ki approx monthly value likhein (sirf number, jaise 100000)?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "sales_register",
+    "label": "Sales Register",
+    "req": "TRUE"
+   },
+   {
+    "key": "purchase_register",
+    "label": "Purchase Register",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Sales data collection\",\"Return preparation\",\"Portal filing\"]"
+ },
+ {
+  "service": "INCOME_CERT",
+  "name": "Income Certificate",
+  "cat": "Certificate",
+  "desc": "State income certificate (scholarship/scheme ke liye)",
+  "portal": "STATE_PORTAL",
+  "fields": [
+   {
+    "key": "full_name",
+    "label": "Pura Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura naam (Aadhaar/voter ID ke hisaab se) likhein?"
+   },
+   {
+    "key": "father_name",
+    "label": "Pita ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapke pita ji ka pura naam likhein?"
+   },
+   {
+    "key": "dob",
+    "label": "Date of Birth",
+    "type": "DOB",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki date of birth likhein (DD/MM/YYYY format mein)?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   },
+   {
+    "key": "address",
+    "label": "Pura Address",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura address likhein (House/Street, City, District, State, PIN code)?"
+   },
+   {
+    "key": "annual_income",
+    "label": "Varshik Aay",
+    "type": "NUMBER",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki annual income (varshik aay) kitni hai? Sirf number likhein (jaise 180000)?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "income_proof",
+    "label": "Income Proof",
+    "req": "TRUE"
+   },
+   {
+    "key": "photograph",
+    "label": "Passport Photo",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Application fill\",\"Revenue dept verification\",\"Certificate issue\"]"
+ },
+ {
+  "service": "CASTE_CERT",
+  "name": "Caste Certificate",
+  "cat": "Certificate",
+  "desc": "SC/ST/OBC caste certificate",
+  "portal": "STATE_PORTAL",
+  "fields": [
+   {
+    "key": "full_name",
+    "label": "Pura Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura naam (Aadhaar/voter ID ke hisaab se) likhein?"
+   },
+   {
+    "key": "father_name",
+    "label": "Pita ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapke pita ji ka pura naam likhein?"
+   },
+   {
+    "key": "dob",
+    "label": "Date of Birth",
+    "type": "DOB",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki date of birth likhein (DD/MM/YYYY format mein)?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   },
+   {
+    "key": "address",
+    "label": "Pura Address",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura address likhein (House/Street, City, District, State, PIN code)?"
+   },
+   {
+    "key": "caste",
+    "label": "Jati",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki jaati (caste) likhein, jaise SC/ST/OBC/General ya jaati ka naam?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "caste_proof_of_family",
+    "label": "Pariwar Caste Proof",
+    "req": "TRUE"
+   },
+   {
+    "key": "photograph",
+    "label": "Passport Photo",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Application fill\",\"SDM verification\",\"Certificate issue\"]"
+ },
+ {
+  "service": "DOMICILE",
+  "name": "Mool Niwas / Domicile",
+  "cat": "Certificate",
+  "desc": "State domicile / mool niwas praman patra",
+  "portal": "STATE_PORTAL",
+  "fields": [
+   {
+    "key": "full_name",
+    "label": "Pura Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura naam (Aadhaar/voter ID ke hisaab se) likhein?"
+   },
+   {
+    "key": "father_name",
+    "label": "Pita ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapke pita ji ka pura naam likhein?"
+   },
+   {
+    "key": "dob",
+    "label": "Date of Birth",
+    "type": "DOB",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki date of birth likhein (DD/MM/YYYY format mein)?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   },
+   {
+    "key": "address",
+    "label": "Pura Address",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura address likhein (House/Street, City, District, State, PIN code)?"
+   },
+   {
+    "key": "years_of_residence",
+    "label": "Rehne ki Avadhi",
+    "type": "NUMBER",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Is district/state mein kitne saal se reh rahe hain? Sirf number likhein?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "residence_proof",
+    "label": "Niwas Proof",
+    "req": "TRUE"
+   },
+   {
+    "key": "photograph",
+    "label": "Passport Photo",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Application fill\",\"Verification\",\"Certificate issue\"]"
+ },
+ {
+  "service": "BIRTH_CERT",
+  "name": "Birth Certificate",
+  "cat": "Certificate",
+  "desc": "Janm praman patra (new/correction)",
+  "portal": "STATE_PORTAL",
+  "fields": [
+   {
+    "key": "child_name",
+    "label": "Bachche ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Bachche ka pura naam likhein?"
+   },
+   {
+    "key": "father_name",
+    "label": "Pita ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapke pita ji ka pura naam likhein?"
+   },
+   {
+    "key": "mother_name",
+    "label": "Mata ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki mata ji ka pura naam likhein?"
+   },
+   {
+    "key": "dob",
+    "label": "Date of Birth",
+    "type": "DOB",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki date of birth likhein (DD/MM/YYYY format mein)?"
+   },
+   {
+    "key": "place_of_birth",
+    "label": "Janm Sthan",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Janm ka sthan likhein (sheher/aspatal)?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "hospital_receipt",
+    "label": "Aspatal Receipt",
+    "req": "TRUE"
+   },
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Application fill\",\"Registrar verification\",\"Certificate issue\"]"
+ },
+ {
+  "service": "DEATH_CERT",
+  "name": "Death Certificate",
+  "cat": "Certificate",
+  "desc": "Mrityu praman patra",
+  "portal": "STATE_PORTAL",
+  "fields": [
+   {
+    "key": "deceased_name",
+    "label": "Swargiya ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Swargiya (deceased) vyakti ka pura naam likhein?"
+   },
+   {
+    "key": "date_of_death",
+    "label": "Mrityu Tarikh",
+    "type": "DOB",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Mrityu ki tarikh likhein (DD/MM/YYYY format mein)?"
+   },
+   {
+    "key": "place_of_death",
+    "label": "Mrityu Sthan",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Mrityu ka sthan likhein (ghar/aspatal, sheher)?"
+   },
+   {
+    "key": "applicant_name",
+    "label": "Aavedak ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aavedak (applicant) ka pura naam likhein?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "cremation_certificate",
+    "label": "Cremation Certificate",
+    "req": "TRUE"
+   },
+   {
+    "key": "applicant_aadhaar",
+    "label": "Aavedak ka Aadhaar",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Application fill\",\"Registrar verification\",\"Certificate issue\"]"
+ },
+ {
+  "service": "VOTER_ID",
+  "name": "Voter ID (New/Correction)",
+  "cat": "Identity",
+  "desc": "Form 6 (new) / Form 8 (correction)",
+  "portal": "https://www.nvsp.in",
+  "fields": [
+   {
+    "key": "full_name",
+    "label": "Pura Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura naam (Aadhaar/voter ID ke hisaab se) likhein?"
+   },
+   {
+    "key": "dob",
+    "label": "Date of Birth",
+    "type": "DOB",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki date of birth likhein (DD/MM/YYYY format mein)?"
+   },
+   {
+    "key": "relative_name",
+    "label": "Sambandhi ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Sambandhit vyakti ka pura naam aur rishta likhein?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   },
+   {
+    "key": "address",
+    "label": "Pura Address",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura address likhein (House/Street, City, District, State, PIN code)?"
+   },
+   {
+    "key": "constituency",
+    "label": "Constituency",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka Vidhan Sabha constituency likhein?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "photograph",
+    "label": "Passport Photo",
+    "req": "TRUE"
+   },
+   {
+    "key": "age_proof",
+    "label": "Age Proof",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Form 6/8 fill\",\"BLO verification\",\"EPIC issue\"]"
+ },
+ {
+  "service": "AYUSHMAN",
+  "name": "Ayushman Card",
+  "cat": "Health",
+  "desc": "PM-JAY Ayushman card banwana",
+  "portal": "https://beneficiary.nha.gov.in",
+  "fields": [
+   {
+    "key": "full_name",
+    "label": "Pura Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura naam (Aadhaar/voter ID ke hisaab se) likhein?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   },
+   {
+    "key": "aadhaar_number",
+    "label": "Aadhaar Number",
+    "type": "AADHAAR",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka Aadhaar number likhein (12 digit)?"
+   },
+   {
+    "key": "ration_card",
+    "label": "Ration Card",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Ration card number likhein (hai toh, warna SKIP likhein)?"
+   },
+   {
+    "key": "state_district",
+    "label": "State-District",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "State aur district likhein (jaise: Rajasthan, Jaipur)?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "ration_card",
+    "label": "Ration Card",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Eligibility check\",\"e-KYC\",\"Card generation\"]"
+ },
+ {
+  "service": "E_SHRAM",
+  "name": "E-Shram Card",
+  "cat": "Labour",
+  "desc": "Unorganized worker registration (UAN)",
+  "portal": "https://register.eshram.gov.in",
+  "fields": [
+   {
+    "key": "full_name",
+    "label": "Pura Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura naam (Aadhaar/voter ID ke hisaab se) likhein?"
+   },
+   {
+    "key": "dob",
+    "label": "Date of Birth",
+    "type": "DOB",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki date of birth likhein (DD/MM/YYYY format mein)?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   },
+   {
+    "key": "aadhaar_number",
+    "label": "Aadhaar Number",
+    "type": "AADHAAR",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka Aadhaar number likhein (12 digit)?"
+   },
+   {
+    "key": "occupation",
+    "label": "Dhanda",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka dhanda/occupation likhein?"
+   },
+   {
+    "key": "address",
+    "label": "Pura Address",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura address likhein (House/Street, City, District, State, PIN code)?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "bank_passbook",
+    "label": "Bank Passbook",
+    "req": "TRUE"
+   },
+   {
+    "key": "photograph",
+    "label": "Passport Photo",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Aadhaar e-KYC\",\"Occupation details\",\"UAN generation\"]"
+ },
+ {
+  "service": "GOV_JOB_FORM",
+  "name": "Government Job Form",
+  "cat": "Employment",
+  "desc": "Sarkari naukri online form filling",
+  "portal": "SERVICE_SPECIFIC",
+  "fields": [
+   {
+    "key": "full_name",
+    "label": "Pura Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura naam (Aadhaar/voter ID ke hisaab se) likhein?"
+   },
+   {
+    "key": "dob",
+    "label": "Date of Birth",
+    "type": "DOB",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki date of birth likhein (DD/MM/YYYY format mein)?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   },
+   {
+    "key": "email",
+    "label": "Email",
+    "type": "EMAIL",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki email ID likhein (nahi hai toh SKIP likhein)?"
+   },
+   {
+    "key": "education_details",
+    "label": "Education",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki education ki details likhein (jaise: 10th pass, B.A.)?"
+   },
+   {
+    "key": "category",
+    "label": "Category",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Category likhein (SC / ST / OBC / General)?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "photograph",
+    "label": "Passport Photo",
+    "req": "TRUE"
+   },
+   {
+    "key": "signature",
+    "label": "Signature",
+    "req": "TRUE"
+   },
+   {
+    "key": "education_certificates",
+    "label": "Education Certificates",
+    "req": "TRUE"
+   },
+   {
+    "key": "caste_certificate_if_any",
+    "label": "Purana Caste Cert",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Vacancy selection\",\"Form filling\",\"Fee payment at portal\",\"Final submission\"]"
+ },
+ {
+  "service": "SCHOLARSHIP",
+  "name": "Scholarship",
+  "cat": "Education",
+  "desc": "National/State scholarship schemes (NSP etc.)",
+  "portal": "https://scholarships.gov.in",
+  "fields": [
+   {
+    "key": "student_name",
+    "label": "Student ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Student ka pura naam likhein?"
+   },
+   {
+    "key": "dob",
+    "label": "Date of Birth",
+    "type": "DOB",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki date of birth likhein (DD/MM/YYYY format mein)?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   },
+   {
+    "key": "email",
+    "label": "Email",
+    "type": "EMAIL",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki email ID likhein (nahi hai toh SKIP likhein)?"
+   },
+   {
+    "key": "institute_name",
+    "label": "Institute ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Institute/school/college ka naam likhein?"
+   },
+   {
+    "key": "bank_account",
+    "label": "Bank Account",
+    "type": "ACCOUNT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka bank account number likhein?"
+   },
+   {
+    "key": "ifsc",
+    "label": "IFSC Code",
+    "type": "IFSC",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Bank branch ka IFSC code likhein (jaise SBIN0001234)?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "marksheet",
+    "label": "Marksheet",
+    "req": "TRUE"
+   },
+   {
+    "key": "income_certificate",
+    "label": "Income Certificate",
+    "req": "TRUE"
+   },
+   {
+    "key": "caste_certificate_if_any",
+    "label": "Purana Caste Cert",
+    "req": "TRUE"
+   },
+   {
+    "key": "bank_passbook",
+    "label": "Bank Passbook",
+    "req": "TRUE"
+   }
+  ],
+  "steps": "[\"Scheme selection\",\"Form fill\",\"Institute verification\"]"
+ },
+ {
+  "service": "RATION_CARD",
+  "name": "Ration Card",
+  "cat": "Identity",
+  "desc": "Naya ration card (Smart PDS) ya member add - NFSA",
+  "portal": "https://nfsa.gov.in",
+  "fields": [
+   {
+    "key": "full_name",
+    "label": "Mukhiya ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Ghar ke mukhiya (head of family) ka pura naam likhein?"
+   },
+   {
+    "key": "father_name",
+    "label": "Pita ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Mukhiya ke pita ji ka pura naam likhein?"
+   },
+   {
+    "key": "dob",
+    "label": "Date of Birth",
+    "type": "DOB",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Mukhiya ki date of birth likhein (DD/MM/YYYY)?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   },
+   {
+    "key": "address",
+    "label": "Pura Address",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura address likhein (House/Street, City, District, State, PIN code)?"
+   },
+   {
+    "key": "occupation",
+    "label": "Dhanda",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Mukhiya ka dhanda/occupation likhein (jaise: kheti, dukaan, mazdoori)?"
+   },
+   {
+    "key": "annual_income",
+    "label": "Varshik Aay",
+    "type": "NUMBER",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Parivar ki total annual income likhein (sirf number, jaise 120000)?"
+   },
+   {
+    "key": "family_members",
+    "label": "Parivar Sadasya",
+    "type": "NUMBER",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Ghar mein kitne sadasya (members) hain? Sirf number likhein?"
+   },
+   {
+    "key": "card_type",
+    "label": "Card Type",
+    "type": "CHOICE",
+    "req": "TRUE",
+    "opts": "APL,BPL,ANTYODAYA,PATA_NAHI",
+    "q": "Kaunsa ration card chahiye? (APL / BPL / ANTYODAYA / pata nahi toh PATA_NAHI)?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "photograph",
+    "label": "Passport Photo",
+    "req": "TRUE"
+   },
+   {
+    "key": "address_proof",
+    "label": "Address Proof",
+    "req": "TRUE"
+   },
+   {
+    "key": "income_certificate",
+    "label": "Income Certificate",
+    "req": "FALSE"
+   },
+   {
+    "key": "caste_certificate",
+    "label": "Caste Certificate",
+    "req": "FALSE"
+   }
+  ],
+  "steps": "[\"Aadhaar OTP login\",\"RC Application form\",\"Family members add\",\"FPS dealer selection\",\"Acknowledgement number\"]"
+ },
+ {
+  "service": "PASSPORT",
+  "name": "Passport",
+  "cat": "Identity",
+  "desc": "Naya passport / renewal (36/60 pages) - PSK appointment ke saath",
+  "portal": "https://www.passportindia.gov.in",
+  "fields": [
+   {
+    "key": "full_name",
+    "label": "Pura Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura naam (Aadhaar/marksheet ke hisaab se) likhein?"
+   },
+   {
+    "key": "father_name",
+    "label": "Pita ka Naam",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapke pita ji ka pura naam likhein?"
+   },
+   {
+    "key": "dob",
+    "label": "Date of Birth",
+    "type": "DOB",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki date of birth likhein (DD/MM/YYYY format mein)?"
+   },
+   {
+    "key": "mobile",
+    "label": "Mobile Number",
+    "type": "MOBILE",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka 10 digit mobile number likhein?"
+   },
+   {
+    "key": "email",
+    "label": "Email",
+    "type": "EMAIL",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapki email ID likhein (Passport Seva login isi par banta hai)?"
+   },
+   {
+    "key": "address",
+    "label": "Pura Address",
+    "type": "TEXT",
+    "req": "TRUE",
+    "opts": "",
+    "q": "Aapka pura address likhein (House/Street, City, District, State, PIN code)?"
+   },
+   {
+    "key": "education",
+    "label": "Education (ECR)",
+    "type": "CHOICE",
+    "req": "TRUE",
+    "opts": "10TH_PASS,BELOW_10TH",
+    "q": "Kya aap 10th pass hain? (10TH_PASS / BELOW_10TH) - isse ECR/Non-ECR tay hota hai?"
+   },
+   {
+    "key": "apply_type",
+    "label": "Apply Type",
+    "type": "CHOICE",
+    "req": "TRUE",
+    "opts": "NEW,RENEWAL,TATKAAL",
+    "q": "Kaisa passport apply karna hai? (NEW / RENEWAL / TATKAAL)?"
+   }
+  ],
+  "docs": [
+   {
+    "key": "aadhaar_card",
+    "label": "Aadhaar Card",
+    "req": "TRUE"
+   },
+   {
+    "key": "dob_proof",
+    "label": "DOB Proof",
+    "req": "TRUE"
+   },
+   {
+    "key": "address_proof",
+    "label": "Address Proof",
+    "req": "TRUE"
+   },
+   {
+    "key": "old_passport",
+    "label": "Purana Passport",
+    "req": "FALSE"
+   }
+  ],
+  "steps": "[\"Passport Seva registration\",\"Form fill (9 steps)\",\"Fee payment Rs 2500\",\"PSK appointment booking\",\"Police verification\"]"
+ }
+]

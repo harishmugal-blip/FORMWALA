@@ -1,0 +1,220 @@
+{
+ "id": "3c5c1919-0000-4000-8000-000000000019",
+ "name": "CSC 19 - Status Engine",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst j = $json;\nconst msg = String(j.message || '').trim();\nconst m = msg.toUpperCase().match(/CSC-\\d{4}-[A-Z0-9]{4,8}/);\nreturn [{ json: { phone: j.phone, name: j.name || '', specific: m ? m[0] : '' } }];"
+   },
+   "name": "Parse Status Query",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-SpecificApp",
+       "leftValue": "={{ $json.specific }}",
+       "rightValue": "",
+       "operator": {
+        "type": "string",
+        "operation": "notEmpty",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Specific App?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "application_number",
+       "condition": "eq",
+       "keyValue": "={{ $('Parse Status Query').first().json.specific }}"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get One App",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst STATUS_EMOJI = { DRAFT: '\\u23f3', FIELDS: '\\u270d\\ufe0f', DOCS: '\\ud83d\\udcc4', PAYMENT: '\\ud83d\\udcb0', PAID: '\\u2705', OPERATOR: '\\ud83d\\udc64\\u200d\\ud83d\\udcbc', SUBMITTED: '\\ud83c\\udf89', ISSUE_REPORTED: '\\u26a0\\ufe0f', DONE: '\\ud83c\\udfc1' };\nconst app = $json;\nconst p = $('Parse Status Query').first().json;\nif (!app.application_id) return [{ json: { reply: '\\u26a0\\ufe0f Application ' + p.specific + ' nahi mila. Number check karein.', phone: p.phone } }];\nconst emo = STATUS_EMOJI[app.status] || '\\u2139\\ufe0f';\nlet msg = '\\ud83d\\udccb *' + app.application_number + '*\\n';\nmsg += '\\ud83d\\udee0\\ufe0f Service: ' + app.service_id + '\\n';\nmsg += emo + ' Status: *' + app.status + '*\\n';\nif (app.total_fee) msg += '\\ud83d\\udcb0 Total: Rs ' + app.total_fee + '\\n';\nmsg += '\\ud83d\\udcc5 Updated: ' + String(app.updated_at || '').slice(0, 10);\nreturn [{ json: { reply: msg, phone: p.phone } }];"
+   },
+   "name": "One App Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "applications"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "customer_phone",
+       "condition": "eq",
+       "keyValue": "={{ $('Parse Status Query').first().json.phone }}"
+      }
+     ]
+    },
+    "returnAll": true
+   },
+   "name": "Get My Apps",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "returnAll": true,
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst STATUS_EMOJI = { DRAFT: '\\u23f3', FIELDS: '\\u270d\\ufe0f', DOCS: '\\ud83d\\udcc4', PAYMENT: '\\ud83d\\udcb0', PAID: '\\u2705', OPERATOR: '\\ud83d\\udc64\\u200d\\ud83d\\udcbc', SUBMITTED: '\\ud83c\\udf89', ISSUE_REPORTED: '\\u26a0\\ufe0f', DONE: '\\ud83c\\udfc1' };\nconst p = $('Parse Status Query').first().json;\nlet apps = [];\ntry { apps = $input.all().map(i => i.json).filter(a => a && a.application_id); } catch (e) {}\nif (!apps.length) {\n  return [{ json: { reply: '\\ud83d\\udccb Aapki koi application nahi mili.\\nNaya kaam shuru karne ke liye service ka naam type karein (jaise: PAN card banana hai).', phone: p.phone } }];\n}\nlet msg = '\\ud83d\\udccb *Aapki Applications (' + apps.length + ')*\\n';\napps.slice(0, 5).forEach((a, i) => {\n  const emo = STATUS_EMOJI[a.status] || '\\u2139\\ufe0f';\n  msg += '\\n' + (i + 1) + '. ' + (a.application_number || a.application_id) + '\\n   ' + a.service_id + ' - ' + emo + ' ' + a.status;\n});\nif (apps.length > 5) msg += '\\n... aur ' + (apps.length - 5) + ' applications';\nmsg += '\\n\\nDetail ke liye: STATUS CSC-2026-XXXXXX likhein';\nreturn [{ json: { reply: msg, phone: p.phone } }];"
+   },
+   "name": "List Apps Reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Parse Status Query",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Parse Status Query": {
+   "main": [
+    [
+     {
+      "node": "Specific App?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Specific App?": {
+   "main": [
+    [
+     {
+      "node": "Get One App",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Get My Apps",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get One App": {
+   "main": [
+    [
+     {
+      "node": "One App Reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get My Apps": {
+   "main": [
+    [
+     {
+      "node": "List Apps Reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

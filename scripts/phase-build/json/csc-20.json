@@ -1,0 +1,503 @@
+{
+ "id": "3c5c2020-0000-4000-8000-000000000020",
+ "name": "CSC 20 - Notification Engine (WhatsApp Sender)",
+ "nodes": [
+  {
+   "parameters": {
+    "inputSource": "passthrough"
+   },
+   "name": "Trigger",
+   "type": "n8n-nodes-base.executeWorkflowTrigger",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "insert",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "notifications_log"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "phone": "={{ $json.phone }}",
+      "template": "={{ $json.template || 'GENERIC' }}",
+      "message": "={{ ($json.message || '').slice(0, 2000) }}",
+      "status": "QUEUED",
+      "related_id": "={{ $json.related_id || $json.phone }}",
+      "error": "",
+      "created_at": "={{ $now.toISO() }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Log Notification",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=WHATSAPP_PHONE_NUMBER_ID"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Phone ID",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=WHATSAPP_ACCESS_TOKEN"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get Token",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "get",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "system_config"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "config_key",
+       "condition": "eq",
+       "keyValue": "=WHATSAPP_API_VERSION"
+      }
+     ]
+    },
+    "returnAll": false,
+    "limit": 1
+   },
+   "name": "Get API Ver",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ],
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst pid = $('Get Phone ID').first().json.config_value || '';\nconst token = $('Get Token').first().json.config_value || '';\nconst ver = $('Get API Ver').first().json.config_value || 'v21.0';\nconst t = $('Trigger').first().json;\nconst ready = pid && token && !pid.startsWith('SET_') && !token.startsWith('SET_');\nreturn [{ json: { ready, pid, token, ver, phone: t.phone, message: t.message, template: t.template || 'GENERIC', related_id: t.related_id || t.phone } }];"
+   },
+   "name": "Check WA Creds",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "c0-CredsReady",
+       "leftValue": "={{ $json.ready }}",
+       "rightValue": "true",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Creds Ready?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "=https://graph.facebook.com/{{ $json.ver }}/{{ $json.pid }}/messages",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{ $('Check WA Creds').first().json.token }}"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', to: $('Check WA Creds').first().json.phone, type: 'text', text: { body: $('Check WA Creds').first().json.message } }) }}",
+    "options": {
+     "response": {
+      "response": {
+       "neverError": true
+      }
+     },
+     "timeout": 30000
+    }
+   },
+   "name": "Send WhatsApp",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    0,
+    0
+   ],
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst r = $json;\nconst waMsgId = r.messages && r.messages[0] && r.messages[0].id || '';\nconst err = r.error ? String(r.error.message || JSON.stringify(r.error)).slice(0, 500) : '';\nreturn [{ json: { waMsgId, err, phone: $('Check WA Creds').first().json.phone, related_id: $('Check WA Creds').first().json.related_id } }];"
+   },
+   "name": "Update Sent Status",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "notifications_log"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "related_id",
+       "condition": "eq",
+       "keyValue": "={{ $json.related_id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "status": "SENT",
+      "error": "={{ $json.err }}"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Mark Log Sent",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nreturn [{ json: { ok: true, mock: false, wa_message_id: $json.waMsgId, error: $json.err } }];"
+   },
+   "name": "Sent Output",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nconst c = $('Check WA Creds').first().json;\nreturn [{ json: { ok: true, mock: true, phone: c.phone, message: c.message, related_id: c.related_id, note: 'WhatsApp credentials set nahi hain - message log only. Meta token set karte hi real send hoga.' } }];"
+   },
+   "name": "Mock Send",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "row",
+    "operation": "update",
+    "dataTableId": {
+     "__rl": true,
+     "mode": "name",
+     "value": "notifications_log"
+    },
+    "matchType": "allConditions",
+    "filters": {
+     "conditions": [
+      {
+       "keyName": "related_id",
+       "condition": "eq",
+       "keyValue": "={{ $('Check WA Creds').first().json.related_id }}"
+      }
+     ]
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "status": "MOCK_LOGGED",
+      "error": "credentials not set"
+     },
+     "matchingColumns": [],
+     "schema": [],
+     "attemptToConvertTypes": false,
+     "convertFieldsToString": false
+    }
+   },
+   "name": "Mark Log Mock",
+   "type": "n8n-nodes-base.dataTable",
+   "typeVersion": 1.1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "\nreturn [{ json: { ok: true, mock: true } }];"
+   },
+   "name": "Mock Output",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Trigger": {
+   "main": [
+    [
+     {
+      "node": "Log Notification",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Log Notification": {
+   "main": [
+    [
+     {
+      "node": "Get Phone ID",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Phone ID": {
+   "main": [
+    [
+     {
+      "node": "Get Token",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Token": {
+   "main": [
+    [
+     {
+      "node": "Get API Ver",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get API Ver": {
+   "main": [
+    [
+     {
+      "node": "Check WA Creds",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Check WA Creds": {
+   "main": [
+    [
+     {
+      "node": "Creds Ready?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Creds Ready?": {
+   "main": [
+    [
+     {
+      "node": "Send WhatsApp",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Mock Send",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Send WhatsApp": {
+   "main": [
+    [
+     {
+      "node": "Update Sent Status",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Update Sent Status": {
+   "main": [
+    [
+     {
+      "node": "Mark Log Sent",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mark Log Sent": {
+   "main": [
+    [
+     {
+      "node": "Sent Output",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mock Send": {
+   "main": [
+    [
+     {
+      "node": "Mark Log Mock",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mark Log Mock": {
+   "main": [
+    [
+     {
+      "node": "Mock Output",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}
