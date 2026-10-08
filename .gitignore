@@ -61,3 +61,7 @@ download/csc-memory/db/
 logs/
 tsconfig.tsbuildinfo
 tool-results/
+credentials-backup.json
+*-credential.json
+**/credentials*.json
+csc-secrets/

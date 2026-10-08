@@ -152,6 +152,7 @@ Watchdog khud sab upar wale ko start karta rahega: `scripts/keep-services.sh`
 | download/backup-formbot-20261006/ | FormBot code backup |
 | download/csc-memory/ | **MEMORY auto-backup (watchdog 30 min)** |
 | download/CSC-SmartSeva-FULL-20261008.zip | **FULL BACKUP ZIP (11M, sab kuch included)** |
+| GitHub: harishmugal-blip/FORMWALA | **Code repo (clean push, 402 files, main=b64524b)** |
 | worklog.md | Detailed per-task work log |
 
 ---

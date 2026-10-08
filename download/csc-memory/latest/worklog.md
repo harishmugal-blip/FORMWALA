@@ -463,3 +463,22 @@ Stage Summary:
 - 2 zips ab download/ me: CSC-PROJECT-COMPLETE (1.4G, LITERAL SAB incl. node_modules — extract karke seedha chalega) + CSC-SmartSeva-FULL (11M, code+config+session only, node_modules reinstall karna padta he)
 - Learning: bade zip me -1 (fast) compression kaafi he (3.8G→1.4G), archive ko project ke bahar banao
 - Files: download/CSC-PROJECT-COMPLETE-20261008.zip (new, 1.4G)
+
+---
+Task ID: 21
+Agent: main (Super Z)
+Task: GitHub push — harishmugal-blip/FORMWALA repo (user ne token diya)
+
+Work Log:
+- SECURITY: git history me .env + whatsapp-bridge/auth (7955 Baileys session files) + 1.4G zip ALREADY tracked the — seedha push = WhatsApp session hijack + secrets leak risk. FRESH ORPHAN HISTORY banaya (single clean commit)
+- GitHub Push Protection ne 3 REAL secrets pakde: scripts/gemini-credential.json (GCP key), scripts/openrouter-credential.json (OpenRouter key), download/supabase-migration/credentials-backup.json (dono) — sab git se bahar kiye (local disk pe safe hein), scripts/research/ bhi hata diya (scraped pages me public embed AIza keys the)
+- .gitignore additions: .env, whatsapp-bridge/auth/, download/*.zip, download/csc-memory/db/, *.log, logs/, tsconfig.tsbuildinfo, tool-results/, credentials-backup.json, *-credential.json, scripts/research/
+- DEBUG kahaani: (1) git rm --cached pehli baar silently fail (2>/dev/null chhupa gaya) (2) fresh-main orphan branch bani thi lekin push HAMESHA purani main pe ja raha tha — auto-commit daemon (UUID commits) worktree main pe wapas le aya tha, isliye purane commits ke secrets flag hote rahe (3) branch rename ke baad hi clean push hua
+- FINAL: main=b64524b force-pushed, remote==local VERIFIED, 402 files, secret scan ZERO, GitHub file-limit check pass
+- Token scopes full (repo+delete_repo+sab), repo PUBLIC he
+
+Stage Summary:
+- CODE GITHUB PE LIVE: github.com/harishmugal-blip/FORMWALA (main) — clean single-commit history, koi secret nahi, koi auth session nahi, koi >100MB file nahi
+- IMPORTANT: user ko GitHub token ROTATE karne bola jayega (chat me paste hua tha); GCP/OpenRouter keys kabhi push nahi hui (protection ne block kiya) — waise bhi rotate recommend
+- Learning: is sandbox me auto-commit daemon he jo worktree branch manipulate karta he — branch ops ke baad hamesha git log + git rev-parse se verify karo; push protection errors ko FULL padho (tail chhupa deta he)
+- Files: .gitignore (update), fresh git history (single commit b64524b)
