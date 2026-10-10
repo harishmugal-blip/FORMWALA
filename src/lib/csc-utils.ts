@@ -19,6 +19,17 @@ export async function postJson<T>(url: string, body: unknown): Promise<T> {
   return data as T;
 }
 
+export async function patchJson<T>(url: string, body: unknown): Promise<T> {
+  const r = await fetch(url, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(String((data as { error?: string })?.error || r.status));
+  return data as T;
+}
+
 export function inr(n: number): string {
   return "₹" + n.toLocaleString("en-IN");
 }

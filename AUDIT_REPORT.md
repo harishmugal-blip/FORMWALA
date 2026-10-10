@@ -78,13 +78,21 @@ Tested natural language citizen conversations via `scripts/test-citizen-flow.mjs
 
 ---
 
+## 💰 Service Fees Management (Live Fee Update)
+- **Feature Added:** Operators can now update Government Fees, CSC Service Charge, GST %, and Total Fee for all 16 documents directly from the Dashboard (`Services` tab).
+- **Backend API:** `PATCH /api/services` updates `service_catalog` in SQLite `custom.db` with instant recalculation.
+- **Frontend UI:** Dual views (Grid Card view & Table Matrix view), live formula breakdown (`Govt + CSC + GST = Total`), custom override option, and active/inactive toggle.
+- **Real-Time Sync:** Updating fees instantly updates the WhatsApp bot, web chatbot, and online payment links without any restart needed.
+
+---
+
 ## 🛡️ Active Daemons & Ports
 
 | Daemon | Port | Task ID | Status | Role |
 |---|---|---|---|---|
 | **Next.js Web & API** | `:3000` | `task-655` | 🟢 Active | Citizen Landing Page, Webchat, & Operator Dashboard |
 | **WhatsApp Bridge** | `:8080` | `task-357` | 🟢 Active | Baileys WhatsApp connection (`917668483205`) |
-| **Dastavej Sahayak AI Brain** | `:8090` | `task-323` | 🟢 Active | Gemini NLP, multi-turn state machine, service detection |
+| **Dastavej Sahayak AI Brain** | `:8090` | `task-1040` | 🟢 Active | Gemini NLP, multi-turn state machine, service detection |
 
 ---
 
@@ -93,3 +101,4 @@ Tested natural language citizen conversations via `scripts/test-citizen-flow.mjs
 - **Operator PIN:** `2026`
 - **Citizen Web Portal:** `http://localhost:3000`
 - **Watchdog Health URL:** `http://localhost:3000/api/watchdog?key=csc-watchdog-2026`
+
