@@ -25,6 +25,25 @@ try {
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Auto-load .env
+try {
+  const envPath = path.join(__dirname, '..', '.env');
+  if (fs.existsSync(envPath)) {
+    const envLines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+    for (const line of envLines) {
+      const m = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (m && !process.env[m[1]]) {
+        let v = (m[2] || '').trim();
+        if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+          v = v.slice(1, -1);
+        }
+        process.env[m[1]] = v;
+      }
+    }
+  }
+} catch {}
+
 const PORT = Number(process.env.AI_PORT || 8090);
 const MEM_FILE = path.join(__dirname, 'memory.json');
 const MAX_TURNS = 16; // messages kept per customer (8 user + 8 agent)

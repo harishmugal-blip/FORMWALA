@@ -1,18 +1,20 @@
 import Database from "better-sqlite3";
+import path from "node:path";
+import fs from "node:fs";
 
-// CSC Smart Seva reads/writes n8n's own data tables (physical tables:
-// data_table_user_<id>). Table ids are resolved from n8n's `data_table`
-// index so a restore/re-import never breaks the dashboard.
-
+// CSC Smart Seva database adapter:
+// Connects to local db/custom.db in standalone mode, or legacy n8n DB.
+const LOCAL_CUSTOM_DB = path.join(process.cwd(), "db", "custom.db");
 const N8N_DB = "/home/z/.n8n/database.sqlite";
+const DB_PATH = fs.existsSync(LOCAL_CUSTOM_DB) ? LOCAL_CUSTOM_DB : N8N_DB;
 
-let _db: Database.Database | null = null;
+let _db: any = null;
 let _mapCache: Record<string, string> | null = null;
 let _mapCacheAt = 0;
 
-export function getDb(): Database.Database {
+export function getDb(): any {
   if (!_db) {
-    _db = new Database(N8N_DB);
+    _db = new Database(DB_PATH);
     _db.pragma("busy_timeout = 10000");
     _db.pragma("journal_mode = WAL");
   }
@@ -23,11 +25,24 @@ function tableMap(): Record<string, string> {
   const now = Date.now();
   if (_mapCache && now - _mapCacheAt < 60_000) return _mapCache;
   const db = getDb();
-  const rows = db
-    .prepare("SELECT id, name FROM data_table")
-    .all() as { id: string; name: string }[];
   const map: Record<string, string> = {};
-  for (const r of rows) map[r.name] = `data_table_user_${r.id}`;
+
+  try {
+    const hasDataTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='data_table'").get();
+    if (hasDataTable) {
+      const rows = db.prepare("SELECT id, name FROM data_table").all() as { id: string; name: string }[];
+      for (const r of rows) map[r.name] = `data_table_user_${r.id}`;
+      _mapCache = map;
+      _mapCacheAt = now;
+      return map;
+    }
+  } catch {}
+
+  try {
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as { name: string }[];
+    for (const t of tables) map[t.name] = t.name;
+  } catch {}
+
   _mapCache = map;
   _mapCacheAt = now;
   return map;
@@ -35,7 +50,7 @@ function tableMap(): Record<string, string> {
 
 export function phys(name: string): string {
   const t = tableMap()[name];
-  if (!t) throw new Error(`data table not found: ${name}`);
+  if (!t) return name;
   return t;
 }
 

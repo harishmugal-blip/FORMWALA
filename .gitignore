@@ -65,3 +65,4 @@ credentials-backup.json
 *-credential.json
 **/credentials*.json
 csc-secrets/
+.vscode/
