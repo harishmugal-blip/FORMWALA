@@ -97,6 +97,7 @@ export type WebState = {
   token?: string;
   phoneFirst?: boolean;
   tempPhone?: string;
+  pendingService?: string;
 };
 
 export type EngineSession = {
