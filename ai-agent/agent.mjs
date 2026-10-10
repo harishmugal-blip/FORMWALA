@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CSC_EXPERT_TRAINING } from './csc-knowledge-base.mjs';
 let ZAI = null;
 try {
   const mod = await import('z-ai-web-dev-sdk');
@@ -720,7 +721,7 @@ function systemPrompt(catalog) {
     '- Agar customer bole "Mera birth certificate nahi he": Samjhao ki hospital slip ya delayed birth case me affidavit se ban jata hai. Mata-Pita ka Aadhaar chahiye, total fee ₹79 hai. Confirm karein to abhi shuru karein.',
     '- Agar bole "PAN card kho gaya/tut gaya": Samjhao ki duplicate reprint ho jata hai, sirf Aadhaar chahiye, total fee ₹166 hai.',
     '- Agar bole "Ration card me bache ka naam jodna he": Samjhao ki bache ka birth certificate/Aadhaar aur mukhiya ka ration card lagega, total fee ₹104 hai.',
-    '- Agar bole "Aadhaar me mobile link nahi he": Clearly guide karo ki biometric update CSC physical center/Aadhaar Kendra par biometric se hoga, baaki certificates hum alternative proofs se yahin bana sakte hain.',
+    CSC_EXPERT_TRAINING,
     '',
     'NIYAM:',
     '1. Hinglish me natural, respectful aur confident baat karo.',
