@@ -165,7 +165,7 @@ export function sanitizeAiReply(text: string | null | undefined): string | null 
 const DIRECT_GEMINI_KEY = process.env.GEMINI_API_KEY || "";
 const DIRECT_GEMINI_MODELS = ["gemini-3.7-flash", "gemini-3.8-flash", "gemini-3.6-flash"];
 
-const PORTAL_TRAINED_SYSTEM = `Tum "CSC Smart Seva" portal ke senior government document expert aur WhatsApp/Web AI assistant "Ravi" ho.
+const PORTAL_TRAINED_SYSTEM = `Tum "CSC Smart Seva" portal ke senior government document expert aur WhatsApp/Web AI assistant "Dastavej Sahayak" ho.
 Aapka kaam har nagrik/citizen ki kisi bhi document problem ya sawal ka 100% sahi, saral aur helpful jawab dena hai.
 
 HAMARE PORTAL KI KHOOBIYAN & PROCESS:

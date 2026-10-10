@@ -53,7 +53,7 @@ Summary: 9/9 Passed (100% SUCCESS) | 0 Failed
 
 ## 🤖 AI Citizen Inquiry Test Suite (Hindi / Hinglish)
 
-Tested natural language citizen conversations via `scripts/test-citizen-flow.mjs` against Ravi AI Brain:
+Tested natural language citizen conversations via `scripts/test-citizen-flow.mjs` against Dastavej Sahayak AI Brain:
 
 1. **Birth Certificate Inquiry**  
    - *Query:* "Mera birth certificate nahi bana he kaise banega? Kya kya document lagenge?"  
@@ -84,7 +84,7 @@ Tested natural language citizen conversations via `scripts/test-citizen-flow.mjs
 |---|---|---|---|---|
 | **Next.js Web & API** | `:3000` | `task-655` | 🟢 Active | Citizen Landing Page, Webchat, & Operator Dashboard |
 | **WhatsApp Bridge** | `:8080` | `task-357` | 🟢 Active | Baileys WhatsApp connection (`917668483205`) |
-| **Ravi AI Brain** | `:8090` | `task-323` | 🟢 Active | Gemini NLP, multi-turn state machine, service detection |
+| **Dastavej Sahayak AI Brain** | `:8090` | `task-323` | 🟢 Active | Gemini NLP, multi-turn state machine, service detection |
 
 ---
 

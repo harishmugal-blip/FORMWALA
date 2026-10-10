@@ -106,7 +106,7 @@ export function Overview({ onNavigate }: { onNavigate: (v: string) => void }) {
           <span className="h-2 w-2 rounded-full bg-emerald-500" /> SQLite Brain (custom.db)
         </span>
         <span className="flex items-center gap-1.5">
-          <span className={`h-2 w-2 rounded-full ${dot(data.health.agent)}`} /> Ravi AI Brain (:8090)
+          <span className={`h-2 w-2 rounded-full ${dot(data.health.agent)}`} /> Dastavej Sahayak AI (:8090)
         </span>
         <span className="ml-auto text-slate-400">Auto-refresh: 15s</span>
       </div>
