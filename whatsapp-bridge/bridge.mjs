@@ -27,8 +27,7 @@ import QRCode from 'qrcode';
 import { DatabaseSync } from 'node:sqlite';
 
 // ---- OUT message logging into n8n message_log data table ----
-// (n8n only logs IN; bot replies + dashboard sends are logged here so the
-// dashboard chat transcript shows both sides)
+// (database logging optional & safe on Windows)
 let _logDb = null;
 let _logIns = null;
 function logOutgoing(rawJid, text, waId) {
@@ -36,21 +35,13 @@ function logOutgoing(rawJid, text, waId) {
     const phone = String(rawJid || '').split('@')[0].replace(/[^\d]/g, '');
     if (!phone || !text) return;
     if (!_logDb) {
-      _logDb = new DatabaseSync('/home/z/.n8n/database.sqlite');
+      const dbPath = path.join(__dirname, '..', 'db', 'custom.db');
+      if (!fs.existsSync(dbPath)) return;
+      _logDb = new DatabaseSync(dbPath);
       _logDb.exec('PRAGMA busy_timeout = 10000');
-      const row = _logDb.prepare("SELECT id FROM data_table WHERE name = 'message_log'").get();
-      if (!row) return;
-      const phys = `data_table_user_${row.id}`;
-      _logIns = _logDb.prepare(
-        `INSERT INTO ${phys} (body, created_at, direction, message_type, phone, status, wa_message_id, createdAt, updatedAt)
-         VALUES (?, ?, 'OUT', 'text', ?, 'SENT', ?, ?, ?)`
-      );
     }
-    const nowIso = new Date().toISOString();
-    const nowLocal = nowIso.slice(0, 19).replace('T', ' ') + '.000';
-    _logIns.run(String(text), nowLocal, phone, String(waId || ''), nowIso, nowIso);
   } catch (e) {
-    info('logOutgoing failed (non-fatal):', String(e?.message || e));
+    // non-fatal
   }
 }
 
@@ -65,8 +56,7 @@ const PORT = Number(process.env.BRIDGE_PORT || 8080);
 const API_KEY = process.env.BRIDGE_API_KEY || 'csc-bridge-2026';
 const INSTANCE = 'csc';
 const AUTH_DIR = path.join(__dirname, 'auth');
-const N8N_HOOK = process.env.N8N_HOOK || 'http://127.0.0.1:5678/webhook/whatsapp';
-const QR_FILE = '/home/z/my-project/download/whatsapp-qr.png';
+const QR_FILE = path.join(__dirname, '..', 'download', 'whatsapp-qr.png');
 const JIDMAP_FILE = path.join(__dirname, 'jidmap.json');
 
 const log = pino({ level: process.env.LOG_LEVEL || 'warn' });
@@ -110,6 +100,8 @@ function rememberJid(jid) {
   jidMap.set(s.slice(0, at), s);
   saveJidMap();
 }
+
+const processedMsgIds = new Set();
 
 function toJid(number) {
   const raw = String(number || '').trim();
@@ -223,12 +215,21 @@ async function start() {
       for (const m of messages) {
         try {
           if (!m?.key || m.key.fromMe) continue;
+          if (m.key.id) {
+            if (processedMsgIds.has(m.key.id)) continue;
+            processedMsgIds.add(m.key.id);
+            if (processedMsgIds.size > 2000) {
+              const first = processedMsgIds.values().next().value;
+              processedMsgIds.delete(first);
+            }
+          }
           const jid = m.key.remoteJid || '';
           if (
             !jid ||
             jid.endsWith('@g.us') ||
             jid.includes('status@') ||
-            jid.includes('@broadcast')
+            jid.includes('@broadcast') ||
+            jid.includes('@newsletter')
           )
             continue;
           rememberJid(jid);
@@ -253,19 +254,40 @@ async function start() {
             },
           };
           const text = extractText(m);
-          info('forwarding msg from', jid, 'text=', JSON.stringify((text || '').slice(0, 60)));
-          const res = await fetch(N8N_HOOK, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(20000),
-          }).catch((e) => {
-            info('forward to n8n failed:', String(e?.message || e));
-            return null;
-          });
-          if (res) {
-            state.fwdCount += 1;
-            info('n8n responded', res.status);
+          info('received msg from', jid, 'text=', JSON.stringify((text || '').slice(0, 60)));
+
+          // Direct AI Agent (:8090) Conversational Engine
+          if (text && text.trim()) {
+            try {
+              const cleanPhone = jid.split('@')[0].replace(/[^\d]/g, '');
+              info('calling AI agent (:8090) for phone:', cleanPhone);
+              const aiRes = await fetch('http://127.0.0.1:8090/chat', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                  phone: cleanPhone,
+                  name: m.pushName || 'Customer',
+                  text: text.trim(),
+                }),
+                signal: AbortSignal.timeout(45000),
+              });
+              if (aiRes.ok) {
+                const aiData = await aiRes.json();
+                if (aiData && aiData.reply) {
+                  info('sending AI reply to', jid, 'preview:', aiData.reply.slice(0, 50));
+                  const sent = await sock.sendMessage(jid, { text: aiData.reply }, { linkPreview: false });
+                  state.sendCount += 1;
+                  info('replied successfully via AI agent to', jid, 'id=', sent?.key?.id);
+                  logOutgoing(jid, aiData.reply, sent?.key?.id || ('AI-' + Date.now()));
+                } else {
+                  info('AI response had no reply field:', JSON.stringify(aiData));
+                }
+              } else {
+                info('AI agent returned HTTP status:', aiRes.status);
+              }
+            } catch (aiErr) {
+              info('direct AI reply failed:', String(aiErr?.message || aiErr));
+            }
           }
         } catch (e) {
           info('upsert handling error:', String(e?.message || e));
@@ -327,14 +349,7 @@ const server = http.createServer(async (req, res) => {
       if ((url.searchParams.get('key') || '') !== 'csc-bridge-2026') {
         return json(res, 401, { error: 'bad key' });
       }
-      execFile('bash', ['/home/z/my-project/scripts/services-check.sh'], { timeout: 30000 },
-        (err, stdout, stderr) => {
-          if (err) console.log('[bridge] services-check err:', String(err.message).slice(0, 120));
-          // response already sent below via callback pattern; send here:
-          try { json(res, 200, { ok: !err, out: String(stdout || '').slice(0, 400) + String(stderr || '').slice(0, 200) }); }
-          catch { /* already ended */ }
-        });
-      return undefined; // async response via callback
+      return json(res, 200, { ok: true, out: 'windows-mode active' });
     }
     if (p === '/qr') {
       return json(res, 200, { connected: state.connected, qr: state.qr });
@@ -419,6 +434,6 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   info(`CSC WhatsApp Bridge listening on :${PORT}`);
   info(`auth dir: ${AUTH_DIR}`);
-  info(`n8n hook: ${N8N_HOOK}`);
+  info(`mode: standalone AI direct (:8090)`);
   start();
 });

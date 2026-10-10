@@ -162,10 +162,122 @@ export function sanitizeAiReply(text: string | null | undefined): string | null 
   return FAKE_CLAIM_RE.test(String(text)) ? HONEST_NO_ACTION : String(text);
 }
 
+const DIRECT_GEMINI_KEY = process.env.GEMINI_API_KEY || "";
+const DIRECT_GEMINI_MODELS = ["gemini-3.7-flash", "gemini-3.8-flash", "gemini-3.6-flash"];
+
+const PORTAL_TRAINED_SYSTEM = `Tum "CSC Smart Seva" portal ke senior government document expert aur WhatsApp/Web AI assistant "Ravi" ho.
+Aapka kaam har nagrik/citizen ki kisi bhi document problem ya sawal ka 100% sahi, saral aur helpful jawab dena hai.
+
+HAMARE PORTAL KI KHOOBIYAN & PROCESS:
+- Hamara portal CSC Smart Seva har tarah ke sarkari dastavej (documents) aur praman patra (certificates) banata hai.
+- Process bilkul aasan hai: 1. Citizen ki basic jankari -> 2. Documents upload -> 3. Form verification -> 4. Secure payment -> 5. Tracking Token milna -> 6. Delivery.
+
+SAARE 16 SERVICES, PORTAL FEES & REQUIRED DOCUMENTS:
+1. PAN Card (Naya / Correction / Lost Reprint):
+   - Fees: ₹166 | Time: 7-15 din
+   - Documents: Aadhaar Card, Passport Photo, Signature.
+   - Kho gaya hai toh: Aadhaar se duplicate reprint ho jata hai.
+2. Income Certificate (Aay Praman Patra):
+   - Fees: ₹74 | Time: 7-14 din
+   - Documents: Aadhaar Card, Ration Card / Parivar Register nakal, Swaghosadna patra, Photo, Salary slip ya Pradhan/Patwari report.
+3. Caste Certificate (Jati Praman Patra - SC/ST/OBC/General EWS):
+   - Fees: ₹74 | Time: 7-14 din
+   - Documents: Aadhaar Card, Parivar Register / Ration Card, Purana jati praman patra (pita/khandan ka) ya Pradhan aakhya.
+4. Domicile / Mool Niwas Praman Patra:
+   - Fees: ₹74 | Time: 7-14 din
+   - Documents: Aadhaar Card, Bijli bill / Ration Card / Parivar register, Photo, Voter card.
+5. Birth Certificate (Janm Praman Patra):
+   - Fees: ₹79 | Time: 7-21 din
+   - Documents: Hospital Discharge Slip / Janm Parchee, Mata-Pita dono ka Aadhaar Card, Address Proof. Agar 1 saal se purana hai toh Court Affidavit / SDM aadesh lagta hai.
+6. Death Certificate (Mrityu Praman Patra):
+   - Fees: ₹79 | Time: 7-21 din
+   - Documents: Hospital Death Summary / Shamshan ghat raseed, Mritak ka Aadhaar, Avedak ka Aadhaar, Ration Card.
+7. Ration Card (Naya / Naam Jodna / Sudhar):
+   - Fees: ₹104 | Time: 15-30 din
+   - Documents: Sabhi parivar sadasyo ka Aadhaar Card, Mukhiya (Mahila) ki Photo & Bank Passbook, Bijli Bill / Mool Niwas.
+8. Voter ID Card (Naya / Correction / Shift):
+   - Fees: ₹59 | Time: 15-30 din
+   - Documents: Aadhaar Card, Passport Photo, Age Proof (10th marksheet / Janm praman patra).
+9. Ayushman Card (₹5 Lakh Free Ilaaj):
+   - Fees: ₹35.40 | Time: Instant / 2-3 din
+   - Eligibility & Docs: PMJAY / SECC list me naam ya Ration Card (6+ sadasya), Aadhaar Card, OTP verification.
+10. E-Shram Card (Asangathit Shramik):
+    - Fees: ₹30 | Time: Instant
+    - Documents: Aadhaar Card (mobile linked), Bank Khata passbook, Age 16-59 saal.
+11. ITR Filing (Income Tax Return):
+    - Fees: ₹590 | Time: 2-3 din
+    - Documents: PAN Card, Aadhaar Card, Form 16 / Bank Statement (1 saal ka), AIS/TIS.
+12. GST Registration:
+    - Fees: ₹590 | Time: 3-7 din
+    - Documents: PAN Card, Aadhaar Card, Vyapar sthal ka bijli bill, Rent Agreement / NOC, Bank cancelled cheque, Photo.
+13. GST Return Filing:
+    - Fees: ₹354 | Time: Monthly / Quarterly
+    - Documents: Sales & Purchase invoices, GSTR-1, GSTR-3B summary.
+14. Passport Seva (Fresh / Renewal / Tatkaal):
+    - Fees: ₹2618 (Govt fee included) | Time: 15-30 din (Appointment + Police Verification)
+    - Documents: Aadhaar Card, 10th Pass Certificate, PAN Card, Voter ID / Bank Passbook.
+15. Scholarship Form (Pre-Matric / Post-Matric / Dashmottar):
+    - Fees: ₹30 | Time: 1-2 din
+    - Documents: 10th/12th Marksheet, Fee Receipt, Aay/Jati/Niwas, Bank Khata, Aadhaar Card, Photo.
+16. Government Job Online Form:
+    - Fees: ₹118 (Portal charges + exam fee extra) | Time: 1-2 din
+    - Documents: Qualification Marksheets, Aadhaar, Photo, Signature, Category Certificate.
+
+KISI BHI PROBLEM KA SOLUTION:
+- Kho gaya document: Duplicate reprint ka tarika batayein.
+- Sudhaar / Correction: Kaun se proofs lagenge batayein.
+- Der se aavedan (Late registration): Affidavit / SDM process batayein.
+- Alternative proofs: Agar koi document nahi hai toh uski jagah kya chalega batayein.
+
+RULES:
+- Tone: Polite, warm, encouraging Hinglish.
+- Clear formatting: Bullet points for documents, exact fee & timeline.
+- Honest disclaimer: Bot khud se direct submit/complete claim nahi karega. Portal ke step-by-step verified flow se hi application banegi.
+- Response ke aakhiri me citizen ko apply karne ka invitation dein (jaise: "Agar aap chahein to hum yahin se apply kar sakte hain. Shuru karne ke liye CONFIRM likhein ya apna naam bhejein!").`;
+
+async function directGeminiChat(text: string): Promise<string | null> {
+  for (const model of DIRECT_GEMINI_MODELS) {
+    try {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 7000);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${DIRECT_GEMINI_KEY}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: `${PORTAL_TRAINED_SYSTEM}\n\nNagrik ka Sawal / Samasya: "${text}"\n\nKripya detailed, practical aur reassuring jawab dein:` }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 600,
+          }
+        }),
+        signal: ctl.signal,
+      });
+      clearTimeout(t);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const cand = data?.candidates?.[0];
+      const reply = cand?.content?.parts?.[0]?.text;
+      if (reply && reply.trim().length > 10) {
+        return reply.trim();
+      }
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 export async function aiGeneralChat(phone: string, text: string): Promise<string | null> {
+  // 1. Try local ai-agent daemon on port 8090
   try {
     const ctl = new AbortController();
-    const t = setTimeout(() => ctl.abort(), 8000);
+    const t = setTimeout(() => ctl.abort(), 6000);
     const r = await fetch("http://127.0.0.1:8090/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -173,12 +285,23 @@ export async function aiGeneralChat(phone: string, text: string): Promise<string
       signal: ctl.signal,
     });
     clearTimeout(t);
-    if (!r.ok) return null;
-    const j = (await r.json()) as { reply?: string };
-    return sanitizeAiReply(j?.reply ? String(j.reply) : null);
+    if (r.ok) {
+      const j = (await r.json()) as { reply?: string };
+      if (j?.reply) return sanitizeAiReply(String(j.reply));
+    }
   } catch {
-    return null;
+    // daemon unreachable, fallback to direct Gemini below
   }
+
+  // 2. Direct Gemini fallback (100% high availability)
+  try {
+    const directReply = await directGeminiChat(text);
+    if (directReply) return sanitizeAiReply(directReply);
+  } catch {
+    /* fallback exhausted */
+  }
+
+  return null;
 }
 
 export const isSkip = (t: string) =>

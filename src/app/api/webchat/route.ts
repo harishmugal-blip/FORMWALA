@@ -203,8 +203,8 @@ export async function POST(req: NextRequest) {
     out.push({ role: "bot", text: cfg.welcomeMessage, at: new Date().toISOString() });
     out.push({
       role: "bot",
-      text: "Chaliye pehle aapki ID banate hein — *aapka pura naam* likhein. 😊",
-      chips: cfg.quickActions.slice(0, 3),
+      text: "Chaliye pehle aapki ID banate hein — *aapka pura naam* ya *10-digit mobile number* likhein. 😊",
+      chips: ["🆕 Naya Customer", "📱 Purana Customer", ...cfg.quickActions.slice(0, 2)],
       at: new Date().toISOString(),
     });
     await saveMessages(sessionId, out);
@@ -305,8 +305,8 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     stage: result.patch.stage ?? session.stage,
-    customerId: session.customerId,
-    name: session.name,
+    customerId: result.patch.customerId ?? session.customerId,
+    name: result.patch.name ?? session.name,
     messages: out,
   });
 }

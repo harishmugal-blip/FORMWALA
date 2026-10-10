@@ -8,7 +8,7 @@ RUNNER="node"
 command -v node >/dev/null 2>&1 || RUNNER="bun"
 
 # Google AI Studio key (Gemini primary, z-ai fallback, circuit-breaker protected)
-export GEMINI_API_KEY="${GEMINI_API_KEY:-AQ.Ab8RN6IDujVtVmeqSSz7K3s2G4Tu4pJFZJltFvcd1uZkA7vF6A}"
+export GEMINI_API_KEY="${GEMINI_API_KEY:-}"
 
 # kill previous agent/watchdog if any
 pkill -f "agent.mjs" 2>/dev/null

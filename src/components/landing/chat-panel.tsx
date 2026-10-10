@@ -258,6 +258,8 @@ function BotCard({ card }: { card: CardData }) {
 // chip click → engine ke expected canonical text
 function chipToText(chip: string): string {
   const map: [RegExp, string][] = [
+    [/purana customer|^📱 purana/i, "purana customer"],
+    [/naya customer|^🆕 naya/i, "naya customer"],
     [/confirm application|confirm karo|^✅ confirm/i, "confirm"],
     [/edit information|^✏️/i, "edit"],
     [/paid ho gaya|^✅ paid/i, "paid ho gaya"],
@@ -733,7 +735,11 @@ export function ChatWidget({
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Message likhein… (jaise: mool niwas banana he)"
+          placeholder={
+            !customerId
+              ? "Pura naam ya 10-digit mobile number likhein…"
+              : "Message likhein… (jaise: mool niwas banana he)"
+          }
           className="h-10 min-w-0 flex-1 rounded-full border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-emerald-400 focus:bg-white"
           aria-label="Message"
         />

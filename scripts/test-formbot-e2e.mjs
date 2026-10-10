@@ -438,6 +438,42 @@ async function main() {
     joinTexts(briefAsk.texts).slice(0, 100)
   );
 
+  // ---------- Direct Phone Identification (returning customer) ----------
+  section("Direct Phone Identification (New Feature)");
+  const sid9 = "e2e_direct_phone_" + Date.now();
+  await chat(sid9, "");
+  // Purana customer 9876500012 pehle message me hi apna phone number deta he:
+  const directPhoneReply = await chat(sid9, "9876500012");
+  const directPhoneAll = joinTexts(directPhoneReply.texts);
+  ok(
+    "Direct phone identifies returning customer immediately",
+    /wapas aane ke liye shukriya/i.test(directPhoneAll) && directPhoneReply.stage === "MENU",
+    directPhoneAll.slice(0, 120)
+  );
+  ok(
+    "Direct phone returns customerId",
+    Boolean(directPhoneReply.customerId),
+    `customerId: ${directPhoneReply.customerId}`
+  );
+  ok(
+    "Direct phone includes Customer 360 brief",
+    /poora record|banwaya/i.test(directPhoneAll) && /FB-\d{6}-\d{4,6}/i.test(directPhoneAll),
+    directPhoneAll.slice(0, 140)
+  );
+
+  // ---------- Direct Customer ID Identification ----------
+  section("Direct Customer ID Identification (New Feature)");
+  const sid10 = "e2e_direct_cid_" + Date.now();
+  await chat(sid10, "");
+  // Customer enters their Customer ID directly (e.g. CUST-2026-XXXXX):
+  const directCidReply = await chat(sid10, custId);
+  const directCidAll = joinTexts(directCidReply.texts);
+  ok(
+    "Direct Customer ID identifies returning customer",
+    /wapas aane ke liye shukriya/i.test(directCidAll) && directCidReply.stage === "MENU",
+    directCidAll.slice(0, 120)
+  );
+
   // ---------- result ----------
   console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
   console.log(`PASS: ${passed}  FAIL: ${failed}`);

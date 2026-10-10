@@ -182,7 +182,7 @@ Task: "ye proper agent ki tarah baat kyu nahi kar raha he" — mid-flow bot beha
 Work Log:
 - Root cause 1 (MAIN): CSC 06 Field Collector rigid state machine tha — "Sawal 1/6" fixed templates, side-questions IGNORE ("Jpg chalegi kya?" par sirf doc-list reminder), "17 April 2001" reject hoke format maangta tha. Pre-flow Ravi agent theek tha, mid-flow bilkul robotic
 - Root cause 2: LLM replies kabhi-kabhi same greeting repeat karte the (memory me 2x "Namaste! 😎 Main Ravi hoon...")
-- Gemini API key (AQ.Ab8RN6...) test: key VALID hai, lekin Google ne server location block kiya ("User location not supported") — v1/v1beta/Interactions/OpenAI-compat sab pe same. gemini-2.5/2.0 deprecated, sirf 3.8-flash era models
+- Gemini API key test: key VALID hai, lekin Google ne server location block kiya ("User location not supported") — v1/v1beta/Interactions/OpenAI-compat sab pe same. gemini-2.5/2.0 deprecated, sirf 3.8-flash era models
 - agent.mjs v2 rebuild: LLM chain Gemini (circuit-breaker 3 fails=10min cooldown) -> z-ai SDK -> keyword fallback. GEMINI_API_KEY env se armed — geo-block hatte hi auto Gemini on
 - agent.mjs v2 naya /field-chat endpoint: mid-flow intelligence. Input {text, state(FIELDS/DOCS/PAYMENT), field{label,type,options}, docs}. Output {action: answer|reply|cancel|passthrough, value, reply}. DOB/MOBILE/PAN etc format rules CSC 07 validator se aligned
 - Prompt v2: "jawab se pehle customer ka point answer karo, kabhi word-to-word repeat mat karo"
@@ -482,3 +482,53 @@ Stage Summary:
 - IMPORTANT: user ko GitHub token ROTATE karne bola jayega (chat me paste hua tha); GCP/OpenRouter keys kabhi push nahi hui (protection ne block kiya) — waise bhi rotate recommend
 - Learning: is sandbox me auto-commit daemon he jo worktree branch manipulate karta he — branch ops ke baad hamesha git log + git rev-parse se verify karo; push protection errors ko FULL padho (tail chhupa deta he)
 - Files: .gitignore (update), fresh git history (single commit b64524b)
+
+---
+Task ID: 22
+Agent: Antigravity
+Task: Web Chatbot Phone & Customer ID Identification (direct login + brief)
+
+Work Log:
+- Implemented smart direct phone and customer ID identification in webchat engine (src/lib/webchat-engine.ts):
+  * STAGE.NAME me customer seedha apna 10-digit mobile number ya Customer ID (CUST-2026-XXXXX) bhej sakta he
+  * Agar customer pehle se registered he (db.customer me match), to bot bina dobara naam poochhe unka record verify karke warm welcome karta he aur Customer 360° brief (purana application, token, pending, aage kya chahiye) load karke direct STAGE.MENU me le jata he
+  * Agar naya number he, to mobile number note karke full name maangta he aur onboarding complete karta he
+  * Standard name-first flow fully preserved (backwards compatible)
+- API route (src/app/api/webchat/route.ts) updated with welcome prompt chips ["🆕 Naya Customer", "📱 Purana Customer"] aur patched customerId/name response payload
+- ChatWidget UI (src/components/landing/chat-panel.tsx) updated:
+  * Dynamic placeholder: "!customerId ? Pura naam ya 10-digit mobile number likhein… : Message likhein…"
+  * Quick chips mapping for "purana customer" and "naya customer"
+- E2E Test Suite (scripts/test-formbot-e2e.mjs) updated with 4 new assertions:
+  * Direct phone identifies returning customer immediately (stage MENU + brief)
+  * Direct phone returns customerId
+  * Direct phone includes Customer 360 brief
+  * Direct Customer ID identifies returning customer
+- Updated MEMORY.md single source of truth.
+
+Stage Summary:
+- Web Chatbot ab phone number aur Customer ID dono se returning customers ko identify karta he, WhatsApp ki tarah seamless aur zero-friction.
+- Files: src/lib/webchat-engine.ts, src/app/api/webchat/route.ts, src/components/landing/chat-panel.tsx, scripts/test-formbot-e2e.mjs, MEMORY.md, worklog.md
+
+---
+Task ID: 23
+Agent: Antigravity
+Task: AI Chatbot Activation & Portal Knowledge Training with Gemini (Full Citizen Problem-Solving)
+
+Work Log:
+- Verified and armed Gemini API key across gemini-3.7-flash, gemini-3.8-flash, and gemini-3.6-flash.
+- Fixed Gemini API parser bug in ai-agent/agent.mjs (parsing inner candidates[0].content.parts[0].text instead of outer envelope).
+- Adapted AI agent database layer for Windows using node:sqlite with local custom.db (3.49MB SQLite DB containing all 16 services, fields, documents, and applications) instead of Linux paths.
+- Trained AI agent knowledge base with complete CSC Smart Seva portal service details:
+  * All 16 services with exact government/portal fees, timelines, and required documents checklists (PAN Card ₹166, Income Cert ₹74, Caste Cert ₹74, Domicile ₹74, Birth Cert ₹79, Death Cert ₹79, Ration Card ₹104, Voter ID ₹59, Ayushman ₹35.40, E-Shram ₹30, ITR ₹590, GST Reg ₹590, GST Return ₹354, Passport ₹2618, Scholarship ₹30, Gov Job ₹118).
+  * Citizen problem-solving capabilities: lost documents duplicate reprint, name/DOB corrections, late birth/death registration (SDM/court affidavit), alternative proofs, eligibility guidelines.
+- Integrated high-availability direct Gemini fallback into src/lib/webchat-validators.ts (aiGeneralChat) so the bot responds 100% reliably even if background daemons restart.
+- Fixed onboarding inquiry handling in src/lib/webchat-engine.ts:
+  * Before mistaking citizen questions as their name at STAGE.NAME, the engine now detects inquiries, document queries, and problem statements, and immediately provides detailed AI answers with fees, documents, and next steps.
+  * Remembers citizen's inquired service in state.pendingService and automatically initiates that exact service when registration is completed.
+- Validated with end-to-end multi-query test suite (scripts/test-citizen-flow.mjs) achieving 6/6 test pass (Birth Cert, Lost PAN, Domicile, Ration Card addition, Income Cert, Ayushman Bharat).
+
+Stage Summary:
+- AI Chatbot is fully trained, active, and providing accurate guidance for all citizen document queries and problems matching the CSC Smart Seva portal.
+- Files: ai-agent/agent.mjs, src/lib/webchat-validators.ts, src/lib/webchat-engine.ts, scripts/test-citizen-flow.mjs, worklog.md, MEMORY.md
+
+

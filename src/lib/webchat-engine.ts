@@ -95,6 +95,8 @@ export type WebState = {
   fails?: number;
   editingFrom?: "SUMMARY";
   token?: string;
+  phoneFirst?: boolean;
+  tempPhone?: string;
 };
 
 export type EngineSession = {
@@ -925,24 +927,248 @@ export async function processInput(
   }
 
   switch (stage) {
-    // ================= STEP 1: NAME =================
+    // ================= STEP 1: NAME / PHONE IDENTIFICATION =================
     case STAGE.NAME: {
       if (att) {
-        say({ text: "Pehle aapka naam 😊 — file baad me kaam aayegi." });
+        say({ text: "Pehle aapka naam ya mobile number 😊 — file baad me kaam aayegi." });
         break;
       }
+
+      // 1. Direct Customer ID lookup (jaise: CUST-2026-12345)
+      const custIdMatch = text.match(/\b(CUST-\d{4}-[A-Z0-9]{4,6})\b/i);
+      if (custIdMatch) {
+        const targetCid = custIdMatch[1].toUpperCase();
+        try {
+          const existing = await db.customer.findFirst({
+            where: { customerId: targetCid },
+          });
+          if (existing && existing.phone) {
+            session.customerId = existing.customerId;
+            session.phone = existing.phone;
+            session.name = existing.name || "Customer";
+            patchOut.customerId = existing.customerId;
+            patchOut.phone = existing.phone;
+            patchOut.name = existing.name;
+            state = resetState();
+            setStage(STAGE.MENU);
+            say({
+              text:
+                `🎉 *Wapas aane ke liye shukriya, ${existing.name || "Customer"} ji!* 🙏\n\n` +
+                `🆔 Customer ID: *${existing.customerId}*\n` +
+                `📱 Mobile: ${existing.phone}\n\n` +
+                `Aapka record mil gaya he. ${cfg.businessName} ki services dekhiye 👇`,
+            });
+            (await customerBriefReply(existing.phone, existing.customerId, existing.name)).forEach(say);
+            say(await menuReply());
+            break;
+          } else {
+            say({
+              text: `🔎 Customer ID *${targetCid}* database me nahi mila. Kripya apna 10-digit mobile number likhein.`,
+              chips: ["📱 Purana Customer", "🆕 Naya Customer"],
+            });
+            break;
+          }
+        } catch {
+          /* non-fatal */
+        }
+      }
+
+      // 2. Chip click ya inquiry
+      if (/^(purana customer|mobile login|mobile no|login|purani id)\b/i.test(text)) {
+        say({
+          text: "Apna 10-digit mobile number likhein (jaise: 9876543210). Main aapka purana record dhoondhta hoon 😊",
+        });
+        break;
+      }
+      if (/^(naya customer|new customer|main naya hoon)\b/i.test(text)) {
+        say({
+          text: "Bahut badhiya! Chaliye aapki ID banate hain — *aapka pura naam* likhein (jaise: Ramesh Kumar). 😊",
+        });
+        break;
+      }
+
       const looksPhone = /^\+?\d[\d\s-]{7,}$/.test(text);
+
+      // 3. User entered phone number directly at the start!
+      if (looksPhone) {
+        const v = validateField("MOBILE", text);
+        if (v.ok) {
+          const phone = v.value;
+          let existing: { name: string; customerId: string; phone: string } | null = null;
+          try {
+            existing = await db.customer.findUnique({ where: { phone } });
+          } catch {
+            /* non-fatal */
+          }
+
+          if (existing && existing.customerId) {
+            // Existing customer recognized by phone number!
+            session.phone = phone;
+            session.customerId = existing.customerId;
+            session.name = existing.name || "Customer";
+            patchOut.phone = phone;
+            patchOut.customerId = existing.customerId;
+            patchOut.name = existing.name;
+            state = resetState();
+            setStage(STAGE.MENU);
+
+            say({
+              text:
+                `🎉 *Wapas aane ke liye shukriya, ${existing.name || "Customer"} ji!* 🙏\n\n` +
+                `🆔 Customer ID: *${existing.customerId}*\n` +
+                `📱 Mobile: ${phone}\n\n` +
+                `Aapka purana record mil gaya he. ${cfg.businessName} ki services dekhiye 👇`,
+            });
+            (await customerBriefReply(phone, existing.customerId, existing.name)).forEach(say);
+            say(await menuReply());
+            break;
+          } else {
+            // New mobile number! Save phone and ask for full name
+            session.phone = phone;
+            patchOut.phone = phone;
+            state.tempPhone = phone;
+            state.phoneFirst = true;
+            say({
+              text:
+                `📱 *Mobile number note ho gaya:* ${phone}\n\n` +
+                `Aapka number naya he. Ab *aapka pura naam* likhein (jaise: Ramesh Kumar) taaki aapki Customer ID ban sake. 😊`,
+            });
+            break;
+          }
+        } else {
+          say({
+            text: `${v.reason} Sahi 10-digit number likhein (jaise: 9876543210), ya pehle apna naam likhein.`,
+          });
+          break;
+        }
+      }
+
+      // 4. Greetings
       const isGreeting = /^(hi|hii|hiii|hello|namaste|namaskar|hey|salam|salaam|assalam|good (morning|afternoon|evening)|start|shuru|ok)\b/i.test(text);
       if (isGreeting) {
         say({ text: cfg.welcomeMessage });
-        say({ text: "Chaliye pehle aapki ID banate hein — *aapka pura naam* likhein. 😊" });
+        say({
+          text: "Chaliye pehle aapki ID banate hein — *aapka pura naam* ya *10-digit mobile number* likhein. 😊",
+          chips: ["🆕 Naya Customer", "📱 Purana Customer"],
+        });
         break;
       }
-      if (!text || text.length < 2 || looksPhone || !/[a-zA-Z\u0900-\u097F]/.test(text)) {
+
+      // 5. If user had given phone first, now providing their name
+      if (state.phoneFirst && state.tempPhone) {
+        if (!text || text.length < 2 || !/[a-zA-Z\u0900-\u097F]/.test(text)) {
+          say({ text: "Naam thoda sahi se likhein (jaise: Ramesh Kumar)." });
+          break;
+        }
+        const name = text.slice(0, 60).replace(/\s+/g, " ");
+        const phone = state.tempPhone;
+        const pendingSvcId = state.pendingService;
+        session.name = name;
+        session.phone = phone;
+        patchOut.name = name;
+        patchOut.phone = phone;
+
+        const cid = `CUST-2026-${rand(5)}`;
+        session.customerId = cid;
+        patchOut.customerId = cid;
+        state = resetState();
+
+        try {
+          await db.customer.upsert({
+            where: { phone },
+            update: { name, customerId: cid },
+            create: { phone, name, customerId: cid },
+          });
+        } catch {
+          /* non-fatal */
+        }
+        try {
+          upsertCustomerN8n(phone, name);
+        } catch {
+          /* n8n down */
+        }
+        await trackEvent({
+          sessionId: session.sessionId,
+          customerId: cid,
+          phone,
+          eventType: "CUSTOMER_ID_CREATED",
+          detail: cid,
+        });
+
+        const allServices = await getServices();
+        if (pendingSvcId) {
+          const targetSvc = allServices.find((s) => s.service_id === pendingSvcId);
+          if (targetSvc) {
+            setStage(STAGE.OFFER);
+            say({
+              text:
+                `🎉 *Aapki ID ban gayi, ${name} ji!*\n\n` +
+                `👤 Customer ID: *${cid}*\n` +
+                `📱 Mobile: ${phone}\n\n` +
+                `Chaliye ab *${targetSvc.service_name}* ka process shuru karte hain 👇`,
+            });
+            (await startService(state, targetSvc)).forEach(say);
+            break;
+          }
+        }
+
+        setStage(STAGE.MENU);
         say({
-          text: looksPhone
-            ? "Pehle aapka naam chahiye 😊 Naam likhein, phir number."
-            : "Naam thoda sahi se likhein (jaise: Ramesh Kumar).",
+          text:
+            `🎉 *Aapki ID ban gayi!*\n\n` +
+            `👤 Customer ID: *${cid}*\n` +
+            `📱 Mobile: ${phone}\n` +
+            `🧑 Naam: ${name}\n\n` +
+            `Ab se har seva isi ID pe hogi. ${cfg.businessName} ki services dekhiye 👇`,
+        });
+        (await customerBriefReply(phone, cid, name)).forEach(say);
+        say(await menuReply());
+        break;
+      }
+
+      // 5b. Citizen inquiry / problem / question / service consultation BEFORE providing name
+      // If user asks any problem or question (e.g. "Mera birth certificate nahi bana he",
+      // "PAN card kho gaya he", "Aadhaar update", "Income cert fees"), AI answers immediately!
+      const allServices = await getServices();
+      const matchedSvc = matchService(text, allServices);
+      const isQuestionOrInquiry =
+        /[?؟]/.test(text) ||
+        /\b(kaise|kese|kya|kab|kitna|kitne|kitni|kaha|kahan|kyun|kyu|kho gaya|kho gya|bana|banana|banwana|banwani|sudhar|sudharwana|correction|apply|chahiye|chahie|banao|bana do|bhej|help|madad|problem|dikkat|paisa|paise|rupaye|fees|fee|document|documents|kagaz|tarika|process|din|time|lost|duplicate|update|link|download|status|portal|seva|service|praman|patra|online|form)\b/i.test(text) ||
+        text.split(/\s+/).length > 4 ||
+        Boolean(matchedSvc && matchedSvc.score >= 0.7);
+
+      if (isQuestionOrInquiry && !state.phoneFirst) {
+        const ai = await aiGeneralChat(phoneForAI, text);
+        if (ai) {
+          say({ text: ai });
+        } else if (matchedSvc) {
+          const docs = await getDocs(matchedSvc.svc.service_id);
+          say(docsListReply(matchedSvc.svc, docs));
+        } else {
+          say({ text: cfg.fallbackMessage });
+        }
+
+        if (matchedSvc) {
+          state.pendingService = matchedSvc.svc.service_id;
+          say({
+            text: `Agar aap *${matchedSvc.svc.service_name}* apply karna chahte hain, to bas apna *naam* ya *10-digit mobile number* likhein! 👇`,
+            chips: ["🆕 Naya Customer", "📱 Purana Customer", "📋 Saari Services"],
+            cards: allServices.filter((s) => s.service_id === matchedSvc.svc.service_id),
+          });
+        } else {
+          say({
+            text: "Shuru karne ke liye apna *naam* ya *10-digit mobile number* likhein, ya neeche koi seva chunein 👇",
+            chips: ["🆕 Naya Customer", "📱 Purana Customer"],
+            cards: allServices.filter((s) => s.service_id),
+          });
+        }
+        break;
+      }
+
+      // 6. Standard name provided first
+      if (!text || text.length < 2 || !/[a-zA-Z\u0900-\u097F]/.test(text)) {
+        say({
+          text: "Naam thoda sahi se likhein (jaise: Ramesh Kumar).",
         });
         break;
       }
@@ -964,7 +1190,14 @@ export async function processInput(
       }
       const v = validateField("MOBILE", text);
       if (!v.ok) {
-        say({ text: `${v.reason} Dobara likhein.` });
+        const isQuestion =
+          /[?؟]/.test(text) ||
+          /\b(kaise|kese|kya|kab|kitna|kitne|kitni|kaha|kahan|kyun|kyu|paisa|fees|document|kagaz|time)\b/i.test(text);
+        if (isQuestion) {
+          const ai = await aiGeneralChat(phoneForAI, text);
+          if (ai) say({ text: ai });
+        }
+        say({ text: `${v.reason} Kripya 10-digit mobile number likhein.` });
         break;
       }
       const phone = v.value;
@@ -972,14 +1205,22 @@ export async function processInput(
 
       // repeat customer? ID reuse karo (ek number = ek ID)
       let cid = "";
+      let isReturning = false;
       try {
         const existing = await db.customer.findUnique({ where: { phone } });
-        if (existing?.customerId) cid = existing.customerId;
+        if (existing?.customerId) {
+          cid = existing.customerId;
+          isReturning = true;
+        }
       } catch {
         /* non-fatal */
       }
       if (!cid) cid = `CUST-2026-${rand(5)}`;
       session.customerId = cid;
+      patchOut.customerId = cid;
+      patchOut.phone = phone;
+      patchOut.name = session.name;
+      const pendingSvcId = state.pendingService;
       state = resetState();
 
       try {
@@ -1004,10 +1245,31 @@ export async function processInput(
         detail: cid,
       });
 
+      const allServices = await getServices();
+      if (pendingSvcId) {
+        const targetSvc = allServices.find((s) => s.service_id === pendingSvcId);
+        if (targetSvc) {
+          setStage(STAGE.OFFER);
+          say({
+            text:
+              (isReturning
+                ? `🎉 *Aapka record mil gaya, ${session.name || "Customer"} ji!* 🙏\n\n`
+                : `🎉 *Aapki ID ban gayi, ${session.name || "Customer"} ji!*\n\n`) +
+              `👤 Customer ID: *${cid}*\n` +
+              `📱 Mobile: ${phone}\n\n` +
+              `Chaliye ab *${targetSvc.service_name}* ka process shuru karte hain 👇`,
+          });
+          (await startService(state, targetSvc)).forEach(say);
+          break;
+        }
+      }
+
       setStage(STAGE.MENU);
       say({
         text:
-          `🎉 *Aapki ID ban gayi!*\n\n` +
+          (isReturning
+            ? `🎉 *Aapka record mil gaya (Wapas aane ke liye shukriya)!* 🙏\n\n`
+            : `🎉 *Aapki ID ban gayi!*\n\n`) +
           `👤 Customer ID: *${cid}*\n` +
           `📱 Mobile: ${phone}\n` +
           `🧑 Naam: ${session.name}\n\n` +

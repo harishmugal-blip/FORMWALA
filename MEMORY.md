@@ -13,10 +13,10 @@
 |---|---|
 | Project | CSC Smart Seva — WhatsApp + Web government services automation |
 | Owner | harish mirza (Hinglish) |
-| WhatsApp number | 917668483205 (Baileys session) |
-| n8n | http://localhost:5678 — 25/25 workflows active |
-| whatsapp-bridge | http://localhost:8080 (Baileys, LID routing fix) |
-| ai-agent | http://localhost:8090 (Gemini brain, records brief) |
+| WhatsApp number | 917668483205 (CONNECTED ✅ Baileys active) |
+| n8n | Standalone Windows AI-bridge mode (n8n optional) |
+| whatsapp-bridge | http://localhost:8080 (Baileys CONNECTED, direct :8090 AI brain) |
+| ai-agent | http://localhost:8090 (Gemini 3.7/3.8/3.6 trained brain, armed) |
 | FormBot portal | http://localhost:3000 (Next.js web chatbot) |
 | DB | /home/z/my-project/db/custom.db (Prisma + better-sqlite3) |
 | n8n API key | n8n_api_csc-build-2026-a7f3d9e2b8c4 |
@@ -69,28 +69,28 @@ Customer Web ──────> FormBot portal (:3000) /api/webchat
 | 15 | MASTER PROMPT FormBot AI Service Assistant (38 sections) + E2E 33/33 | ✅ |
 | 16 | Demo bugs fix: fuzzy matcher + AI hallucination guard + TEXT validator — E2E 37/37 | ✅ |
 | 17 | Customer 360° brief (dono bots) + 6th wipe recovery + restore STEP 5 permanent fix — E2E 41/41 | ✅ |
+| 22 | Web Chatbot direct phone & Customer ID identification (auto-login + 360° brief) | ✅ |
+| 23 | AI Chatbot portal-driven knowledge training with Gemini (full citizen problem solving) | ✅ |
+| 24 | n8n permanent removal + 16 services conversational state machine (step memory + mid-flow doubt handling) | ✅ |
+| 25 | Razorpay Payment Gateway integration (dynamic payment links + webhook auto-verify + instant WhatsApp receipt) | ✅ |
 
 ---
 
 ## 4. ACTIVE PLAN / ROADMAP
 
-### Ho chuka (latest polish — Task 17):
+### Ho chuka:
 - ✅ Customer 360° brief: "aapne ab tak ye-ye banwaya / ye complete ho gaya / ye pending he / aage kya banwana chahte he"
 - ✅ WhatsApp: phone → records → deterministic brief (LLM bypass, zero hallucination)
 - ✅ Web: ID creation ke turant baad auto-brief + "meri jankari" intent
-- ✅ restore-everything.sh STEP 5 permanent fix (import-dt-full.mjs default)
+- ✅ Web: Direct Phone Number & Customer ID Identification — naye tab/session me bhi direct mobile no ya CUST- ID se purana customer pehchan kar auto-login + record brief
+- ✅ n8n permanently removed — pure direct Node.js + Gemini 3.8 + SQLite custom.db
+- ✅ 16 Services Workflow Audit: 100% Passed (PAN, Income, Caste, Niwas, Birth, Death, Ration, Voter, Ayushman, E-Shram, ITR, GST Reg, GST Return, Gov Job, Scholarship, Passport)
+- ✅ Razorpay Payment Gateway live: `rzp_test_Tlssr6UdzI0dnp` connected, dynamic payment links generated, webhook auto-confirmed, WhatsApp receipts sent
 
-### Abbahi queue me (next up):
-- [ ] (optional) Web chatbot me bhi phone-number se purane customer identify karna (abhi web sirf session-based he)
-- [ ] (optional) Operator dashboard me Customer 360° panel (applications table already he)
-- [ ] (optional) Daily n8n data-table → Prisma sync check (mirror drift detect)
-
-### User-dependent (intezaar me):
-- [ ] Razorpay TEST keys → milte hi LIVE wire karna (abhi payment claim honest-reject hota he)
-- [ ] Operator PIN 2026 (dashboard login)
-- [ ] Meta official WhatsApp API (user ke Meta business account ka wait)
-
----
+### Abbahi queue me (next up for tomorrow):
+- [ ] Real WhatsApp live testing by user with test cards / UPI
+- [ ] Operator dashboard live review
+- [ ] Switch to production `rzp_live_...` keys whenever user is ready
 
 ## 5. LEARNINGS (galti + seekh — ye bhoolna nahi)
 
@@ -157,4 +157,4 @@ Watchdog khud sab upar wale ko start karta rahega: `scripts/keep-services.sh`
 
 ---
 
-*Last updated: 2026-10-08 — Task 18 (Memory System) ke saath.*
+*Last updated: 2026-10-08 — Task 22 (Web Chatbot Phone & Customer ID Identification).*

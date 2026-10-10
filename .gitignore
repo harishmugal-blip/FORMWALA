@@ -56,7 +56,7 @@ server.log
 .env
 whatsapp-bridge/auth/
 download/*.zip
-download/csc-memory/db/
+download/csc-memory/
 *.log
 logs/
 tsconfig.tsbuildinfo
