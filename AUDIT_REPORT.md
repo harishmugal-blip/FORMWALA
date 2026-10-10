@@ -86,6 +86,14 @@ Tested natural language citizen conversations via `scripts/test-citizen-flow.mjs
 
 ---
 
+## 🏪 Multi-Dukandar & Partner SaaS (White-Label Operator Reselling)
+- **Feature Added:** Admin can onboard and sell the FormWala CSC AI portal to multiple external cyber cafes / Jan Seva Kendras.
+- **Backend API:** `GET`, `POST`, `PATCH`, `DELETE` at `/api/operators` with auto operator ID generation (`OP-100X`), 4-digit PIN generation, and subscription validity tracking.
+- **Authentication:** Any Dukandar can log into the dashboard using their personal 4-digit PIN (e.g. Ramesh Sharma - PIN `3441`), with validity expiration checks.
+- **Frontend UI:** New **"Dukandar / Partners"** tab in Dashboard (`src/components/dashboard/operators.tsx`) with MRR tracker, 1-click WhatsApp detail sharing, PIN reveal/copy, and active/suspend toggle.
+
+---
+
 ## 🛡️ Active Daemons & Ports
 
 | Daemon | Port | Task ID | Status | Role |

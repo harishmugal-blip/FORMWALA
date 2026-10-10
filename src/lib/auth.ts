@@ -19,7 +19,8 @@ export function verifyToken(token: string): boolean {
     if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return false
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString())
     if (Date.now() - payload.iat > 7 * 24 * 3600 * 1000) return false // 7 day expiry
-    return payload.role === 'admin'
+    const r = String(payload.role || '').toLowerCase()
+    return ['admin', 'dukandar', 'operator'].includes(r)
   } catch {
     return false
   }

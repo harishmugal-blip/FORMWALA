@@ -10,6 +10,7 @@ import { Services } from "@/components/dashboard/services";
 import { Requests } from "@/components/dashboard/requests";
 import { WhatsAppSetup } from "@/components/dashboard/whatsapp";
 import { ChatbotSettings } from "@/components/dashboard/chatbot";
+import { Operators } from "@/components/dashboard/operators";
 import {
   LayoutDashboard,
   FileText,
@@ -20,6 +21,7 @@ import {
   Smartphone,
   Home,
   Bot,
+  Store,
 } from "lucide-react";
 
 const NAV = [
@@ -27,7 +29,8 @@ const NAV = [
   { id: "applications", label: "Applications", icon: FileText },
   { id: "tasks", label: "Operator Tasks", icon: ClipboardList },
   { id: "conversations", label: "Conversations", icon: MessagesSquare },
-  { id: "services", label: "Services", icon: Grid3X3 },
+  { id: "services", label: "Services & Fees", icon: Grid3X3 },
+  { id: "operators", label: "Dukandar / Partners", icon: Store },
   { id: "requests", label: "Requests", icon: Inbox },
   { id: "chatbot", label: "Chatbot Settings", icon: Bot },
   { id: "whatsapp", label: "WhatsApp Setup", icon: Smartphone },
@@ -139,6 +142,7 @@ function Shell({ onExit }: { onExit: () => void }) {
           {view === "tasks" && <Tasks />}
           {view === "conversations" && <Conversations />}
           {view === "services" && <Services />}
+          {view === "operators" && <Operators />}
           {view === "requests" && <Requests />}
           {view === "chatbot" && <ChatbotSettings />}
           {view === "whatsapp" && <WhatsAppSetup />}
