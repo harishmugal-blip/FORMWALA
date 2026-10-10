@@ -66,3 +66,6 @@ credentials-backup.json
 **/credentials*.json
 csc-secrets/
 .vscode/
+*.db-wal
+*.db-shm
+AGENTS.md

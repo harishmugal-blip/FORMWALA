@@ -118,10 +118,9 @@ export async function GET() {
     .sort((a, b) => b.at.localeCompare(a.at))
     .slice(0, 10);
 
-  const [bridge, n8n, agent] = await Promise.all([
-    ping("http://127.0.0.1:8080/status"),
-    ping("http://127.0.0.1:5678/healthz"),
-    ping("http://127.0.0.1:8090/health"),
+  const [bridge, agent] = await Promise.all([
+    ping("http://127.0.0.1:8080/health", 1000),
+    ping("http://127.0.0.1:8090/health", 1000),
   ]);
 
   return NextResponse.json({
@@ -144,7 +143,7 @@ export async function GET() {
       .map(([id, count]) => ({ id, name: svcNames[id] || id, count }))
       .sort((a, b) => b.count - a.count),
     feed,
-    health: { bridge, n8n, agent },
+    health: { bridge, agent, db: "up", n8n: "disabled" },
     waCfg: (() => {
       try {
         return q1(`SELECT config_value FROM ${phys("system_config")} WHERE config_key='WHATSAPP_API_BASE'`) ?? null;

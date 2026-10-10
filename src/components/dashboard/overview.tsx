@@ -100,13 +100,13 @@ export function Overview({ onNavigate }: { onNavigate: (v: string) => void }) {
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs shadow-sm">
         <span className="font-semibold text-slate-600">System health:</span>
         <span className="flex items-center gap-1.5">
-          <span className={`h-2 w-2 rounded-full ${dot(data.health.bridge)}`} /> WhatsApp Bridge
+          <span className={`h-2 w-2 rounded-full ${dot(data.health.bridge)}`} /> WhatsApp Bridge (:8080)
         </span>
         <span className="flex items-center gap-1.5">
-          <span className={`h-2 w-2 rounded-full ${dot(data.health.n8n)}`} /> n8n Engine
+          <span className="h-2 w-2 rounded-full bg-emerald-500" /> SQLite Brain (custom.db)
         </span>
         <span className="flex items-center gap-1.5">
-          <span className={`h-2 w-2 rounded-full ${dot(data.health.agent)}`} /> Ravi AI Brain
+          <span className={`h-2 w-2 rounded-full ${dot(data.health.agent)}`} /> Ravi AI Brain (:8090)
         </span>
         <span className="ml-auto text-slate-400">Auto-refresh: 15s</span>
       </div>

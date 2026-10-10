@@ -1,26 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-import { exec } from "child_process";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-// CSC services watchdog — called by n8n "CSC 00 - Services Watchdog"
-// workflow every minute (and safe to call manually). Restarts the
-// whatsapp-bridge / ai-agent if their health checks fail.
+// CSC services watchdog — called by health monitors or manually.
+// Checks whatsapp-bridge (:8080) and ai-agent (:8090).
 const KEY = "csc-watchdog-2026";
 
 export async function GET(req: NextRequest) {
   if (req.nextUrl.searchParams.get("key") !== KEY) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  const result = await new Promise<{ out: string; err: string }>((resolve) => {
-    exec("bash /home/z/my-project/scripts/services-check.sh", { timeout: 20000 }, (err, stdout) => {
-      resolve({ out: String(stdout || ""), err: String(err?.message || "") });
-    });
-  });
+
+  const checkService = async (url: string) => {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+      return res.ok ? "UP" : `HTTP_${res.status}`;
+    } catch {
+      return "DOWN";
+    }
+  };
+
+  const [bridge, agent] = await Promise.all([
+    checkService("http://127.0.0.1:8080/status"),
+    checkService("http://127.0.0.1:8090/health"),
+  ]);
+
   return NextResponse.json({
     ok: true,
-    output: result.out.trim(),
-    error: result.err || undefined,
+    bridge,
+    agent,
+    timestamp: new Date().toISOString(),
   });
 }
